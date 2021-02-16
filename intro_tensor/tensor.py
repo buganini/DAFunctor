@@ -167,6 +167,19 @@ class ITensor():
     def __repr__(self):
         return "Tensor: transpose={transpose}, offset={offset}".format(transpose=self.transpose, offset=self.offset)
 
+    def __len__(self):
+        return eval_expr(self, self.shape[0])
+
+    def __getitem__(self, idx):
+        if idx < len(self):
+            regs = [self]
+            n = [1] + self.shape[1:]
+            f = ["&"]
+            offset = [idx]+[0]*(len(self.shape)-1)
+            return ITensor(regs, n, f, offset=offset)
+        else:
+            raise IndexError()
+
     def output(self, type, name):
         self.type = type
         self.name = name
