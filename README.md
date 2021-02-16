@@ -26,22 +26,20 @@ intro-tensor [[[1 2]
           Tensor: transpose=[0, 2, 1], offset=None,
           ('ref',
            ('ref',
-            ('term', 'reg140273157350144'),
-            ('ref', 'idx', ('ref', 'trans0_2_1', ('term', '0')))),
+            'reg139881170331456',
+            ('ref', 'idx', ('ref', 'trans0_2_1', '0'))),
            ('ref',
             'idx',
             ('ref',
              'trans0_2_1',
-             ('+',
-              ('ref', 'idx', ('ref', 'trans0_2_1', ('term', '0'))),
-              ('term', '1')))))),
+             ('+', ('ref', 'idx', ('ref', 'trans0_2_1', '0')), '1'))))),
          ('endfor',)],
  'data': OrderedDict([('trans0_2_1', ('int', [0, 2, 1])),
-                      ('reg140273157475648', ('float', [1, 2])),
-                      ('reg140273152077120', ('float', [3, 4, 5])),
-                      ('reg140273157350144',
+                      ('reg139881170472128', ('float', [1, 2])),
+                      ('reg139881165467776', ('float', [3, 4, 5])),
+                      ('reg139881170331456',
                        ('float *',
-                        ['reg140273157475648', 'reg140273152077120']))]),
+                        ['reg139881170472128', 'reg139881165467776']))]),
  'symbols': OrderedDict([('output', ('float', [2, 3, 2]))])}
 ```
 
@@ -54,18 +52,17 @@ float output[12];
 
 // Data
 int trans0_2_1[] = {0,2,1};
-float reg140030912884480[] = {1,2};
-float reg140030907485632[] = {3,4,5};
-float * reg140030912758976[] = {reg140030912884480,reg140030907485632};
-
+float reg139881170472128[] = {1,2};
+float reg139881165467776[] = {3,4,5};
+float * reg139881170331456[] = {reg139881170472128,reg139881165467776};
 
 int main(int argc, char *argv[]){
     int idx[3];
     for(idx[0]=0;idx[0]<2;idx[0]++)
-    for(idx[1]=0;idx[1]<3;idx[1]++)
+      for(idx[1]=0;idx[1]<3;idx[1]++)
         for(idx[2]=0;idx[2]<2;idx[2]++)
     {
-        output[idx[0]*3*2 + idx[1]*2 + idx[2]] = reg140030912758976[idx[trans0_2_1[0]]][idx[trans0_2_1[(idx[trans0_2_1[0]]+1)]]];
+        output[idx[0]*3*2 + idx[1]*2 + idx[2]] = reg139881170331456[idx[trans0_2_1[0]]][idx[trans0_2_1[(idx[trans0_2_1[0]]+1)]]];
     }
 
 
@@ -73,6 +70,8 @@ int main(int argc, char *argv[]){
     for(int i=0;i<12;i+=1){
         printf("%f ", output[i]);
     }
+
+    return 0;
 }
 
 

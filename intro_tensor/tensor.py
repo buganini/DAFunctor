@@ -131,14 +131,14 @@ def build_ast(ctx, tensor, expr, transpose=[], recurs=False):
             regs.append(name)
         name = "reg{}".format(id(tensor.regs))
         ctx["data"][name] = ("float *", regs)
-        return ("term", name)
+        return name
     elif re.match("-?[0-9]+", op):
-        return ("term", op)
+        return op
     elif re.match("r[0-9]+", op):
         return tensor.regs[int(op[1:])]
     elif re.match("i[0-9]+", op):
         i = op[1:]
-        st = ("term",i)
+        st = i
         for t in [tensor.transpose]+transpose:
             if t:
                 st = ("ref", "trans{}".format("_".join([str(x) for x in t])), st)
