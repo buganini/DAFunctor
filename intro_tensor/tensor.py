@@ -173,7 +173,7 @@ class ITensor():
     def __getitem__(self, idx):
         if idx < len(self):
             regs = [self]
-            n = [1] + self.shape[1:]
+            n = self.shape[1:]
             f = ["&"]
             offset = [idx]+[0]*(len(self.shape)-1)
             return ITensor(regs, n, f, offset=offset)
