@@ -4,19 +4,20 @@ sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 
 import intro_tensor as it
 import numpy
+import pprint
 
-# r = np.arange(3)
-# print(r.eval())
+pp = pprint.PrettyPrinter()
 
-
-r = numpy.array(numpy.meshgrid([1,2],[3,4])).transpose(0,2,1)
+r = numpy.array(numpy.meshgrid([1,2],[3,4,5]))
 print("numpy", r)
 
-r = it.raw_meshgrid([1,2],[3,4])
+r = it.meshgrid([1,2],[3,4,5])
 print("intro-tensor", r.eval())
+r.output("float", "output")
 
-r = numpy.array(numpy.meshgrid([1,2],[3,4]))
-print("numpy", r)
+print("===== CFG =====")
+cfg = it.build_cfg([r])
+pp.pprint(cfg)
 
-r = it.meshgrid([1,2],[3,4])
-print("intro-tensor", r.eval())
+print("===== C =====")
+it.gen_c(cfg, sys.stdout)

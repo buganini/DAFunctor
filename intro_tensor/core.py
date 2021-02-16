@@ -23,10 +23,10 @@ def arange(*args):
 
 def transpose(tensor, dims):
     rmap = [dims.index(i) for i in range(len(tensor.shape))]
-    regs = [tensor, rmap]
+    regs = [tensor]
     n = [tensor.shape[dims[i]] for i in range(len(tensor.shape))]
-    f = ["ref","r0","transpose","r1","i"]
-    return ITensor(regs, n, f)
+    f = ["&"]
+    return ITensor(regs, n, f, transpose=rmap)
 
 def raw_meshgrid(*args):
     regs = args
