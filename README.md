@@ -41,6 +41,8 @@ intro-tensor [[[1 2]
                        ('float *',
                         ['reg139881170472128', 'reg139881165467776']))]),
  'symbols': OrderedDict([('output', ('float', [2, 3, 2]))])}
+ ===== C =====
+...
 ```
 
 # Test generated C code
