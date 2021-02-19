@@ -1,4 +1,4 @@
-from .tensor import ITensor
+from .functor import Functor
 
 def arange(*args):
     if len(args) == 1:
@@ -19,14 +19,14 @@ def arange(*args):
     regs = [start,end,step]
     n = ["//","-","r1","r0","r2"] # (end - start) // step
     f = ["+","r0","*","i0","r2"] # start + i * step
-    return ITensor(regs, [n], f)
+    return Functor(regs, [n], f)
 
 def transpose(tensor, dims):
     rmap = [dims.index(i) for i in range(len(tensor.shape))]
     regs = [tensor]
     n = [tensor.shape[dims[i]] for i in range(len(tensor.shape))]
     f = ["&"]
-    return ITensor(regs, n, f, transpose=rmap)
+    return Functor(regs, n, f, transpose=rmap)
 
 def raw_meshgrid(*args):
     regs = args
@@ -34,7 +34,7 @@ def raw_meshgrid(*args):
     for i in range(len(args)):
         n.append(len(args[i]))
     f = ["ref","ref","r","i0","ref","i","+","i0","1"] # r[i0][i[i0+1]]
-    return ITensor(regs, n, f)
+    return Functor(regs, n, f)
 
 def meshgrid(*args):
     if len(args)>1:

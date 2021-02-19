@@ -1,4 +1,4 @@
-from .tensor import *
+from .functor import *
 
 intent_spaces = 4
 
@@ -22,7 +22,7 @@ def gen_c_expr(expr, output, indent=0):
         output.write("}\n")
 
     elif expr[0] == "=":
-        if type(expr[1]) is ITensor:
+        if type(expr[1]) is Functor:
             tensor = expr[1]
             idx = []
             for i in range(len(tensor.shape)):

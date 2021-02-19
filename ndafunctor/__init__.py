@@ -1,4 +1,4 @@
-from .tensor import *
+from .functor import *
 from .core import *
 from .gen_c import *
 

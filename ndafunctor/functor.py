@@ -24,7 +24,7 @@ def new_ctx():
     return ctx
 
 def eval_expr(tensor, expr, index=None, pos=0):
-    if type(expr) is ITensor:
+    if type(expr) is Functor:
         return expr.eval()
     if not type(expr) is list:
         return expr
@@ -72,7 +72,7 @@ def eval_expr(tensor, expr, index=None, pos=0):
     else:
         raise NotImplementedError("Invalid token {}".format(op))
 
-    if type(ret[0]) is ITensor:
+    if type(ret[0]) is Functor:
         ret = ret[0].eval(), ret[1]
 
     if pos==0:
@@ -146,7 +146,7 @@ def build_ast(ctx, tensor, expr, transpose=[], recurs=False):
     else:
         raise NotImplementedError("Invalid token {}".format(op))
 
-class ITensor():
+class Functor():
     def __init__(self, regs, shape, func, transpose=None, offset=None):
         self.regs = regs
         self.shape = shape
@@ -176,7 +176,7 @@ class ITensor():
             n = self.shape[1:]
             f = ["&"]
             offset = [idx]+[0]*(len(self.shape)-1)
-            return ITensor(regs, n, f, offset=offset)
+            return Functor(regs, n, f, offset=offset)
         else:
             raise IndexError()
 
