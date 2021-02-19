@@ -222,6 +222,27 @@ class Functor():
         else:
             raise IndexError()
 
+    def print(self, indent=0, suffix=""):
+        indent__num = 4
+        print(" "*indent*indent__num, end="")
+        print("Functor{}:".format(suffix))
+
+        print(" "*(indent+1)*indent__num, end="")
+        print("{}".format(self.desc))
+
+        print(" "*(indent+1)*indent__num, end="")
+        print("shape={}".format(self.shape))
+
+        print(" "*(indent+1)*indent__num, end="")
+        print("dexpr={}".format(self.dexpr))
+
+        print(" "*(indent+1)*indent__num, end="")
+        print("iexpr={}".format(self.iexpr))
+
+        for i,s in enumerate(self.subs or []):
+            s.print(indent+1, suffix="[{}]".format(i))
+
+
     def output(self, type, name):
         self.type = type
         self.name = name
