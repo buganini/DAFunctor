@@ -22,18 +22,29 @@ def arange(*args):
     return Functor(
         shape,
         dexpr = ["+","d0","*","i0","d2"], # start + i * step
-        iexpr = [["i0"]],
         data = data,
         desc = "arange"
     )
 
 def raw_meshgrid(*args):
-    regs = args
-    n = [len(args)]
+    shape = [range(1,len(args)+1)]
     for i in range(len(args)):
-        n.append(len(args[i]))
-    f = ["ref","ref","r","i0","ref","i","+","i0","1"] # r[i0][i[i0+1]]
-    return Functor(regs, n, f)
+        shape.append(len(args[i]))
+    # data[i0][i[i0+1]]
+    subs = []
+    for i in range(len(args)):
+        subs.append(Functor(
+            [1]+shape[1:],
+            dexpr = ["ref","d","i{}".format(i+1)], # data[i{i0+1}]]
+            data = args[i],
+            desc = "raw_meshgrid[{}]".format(i)
+        ))
+    return Functor(
+        shape,
+        iexpr = [["i{}".format(i+1)] for i in range(len(args))],
+        subs = subs,
+        desc = "raw_meshgrid"
+    )
 
 def meshgrid(*args):
     if len(args)>1:
