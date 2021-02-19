@@ -23,36 +23,54 @@ def new_ctx():
     }
     return ctx
 
-def eval_expr(tensor, expr, index=None, pos=0):
+class Expr():
+    def __init__(self, expr):
+        self.expr = expr
+        self.pos = 0
+
+    def take(self):
+        try:
+            ret = self.expr[self.pos]
+            self.pos += 1
+            return ret
+        except:
+            raise IndexError("Index out of ", self.expr)
+
+    def dump(self):
+        print(self.expr[:self.pos], "<cursor>", self.expr[self.pos:])
+
+def eval_expr(tensor, expr, index=None):
     if type(expr) is Functor:
         return expr.eval()
-    if not type(expr) is list:
+
+    if not type(expr) is Expr:
         return expr
-    op = expr[pos]
+
+    op = expr.take()
     if op == "+":
-        add_a, tks_a = eval_expr(tensor, expr, index, pos=pos+1)
-        add_b, tks_b = eval_expr(tensor, expr, index, pos=pos+1+tks_a)
-        ret = add_a + add_b, 1+tks_a+tks_b
+        add_a = eval_expr(tensor, expr, index)
+        add_b = eval_expr(tensor, expr, index)
+        ret = add_a + add_b
     elif op == "-":
-        sub_a, tks_a = eval_expr(tensor, expr, index, pos=pos+1)
-        sub_b, tks_b = eval_expr(tensor, expr, index, pos=pos+1+tks_a)
-        ret = sub_a - sub_b, 1+tks_a+tks_b
+        sub_a = eval_expr(tensor, expr, index)
+        sub_b = eval_expr(tensor, expr, index)
+        ret = sub_a - sub_b
     elif op == "*":
-        mul_a, tks_a = eval_expr(tensor, expr, index, pos=pos+1)
-        mul_b, tks_b = eval_expr(tensor, expr, index, pos=pos+1+tks_a)
-        ret = mul_a * mul_b, 1+tks_a+tks_b
+        mul_a = eval_expr(tensor, expr, index)
+        mul_b = eval_expr(tensor, expr, index)
+        ret = mul_a * mul_b
     elif op == "//":
-        idiv_a, tks_a = eval_expr(tensor, expr, index, pos=pos+1)
-        idiv_b, tks_b = eval_expr(tensor, expr, index, pos=pos+1+tks_a)
-        ret = idiv_a // idiv_b, 1+tks_a+tks_b
+        idiv_a = eval_expr(tensor, expr, index)
+        idiv_b = eval_expr(tensor, expr, index)
+        ret = idiv_a // idiv_b
     elif op == "ref":
-        ref_a, tks_a = eval_expr(tensor, expr, index, pos=pos+1)
-        ref_b, tks_b = eval_expr(tensor, expr, index, pos=pos+1+tks_a)
+        ref_a = eval_expr(tensor, expr, index)
+        ref_b = eval_expr(tensor, expr, index)
         if type(ref_b) is list:
             ref_b = tuple(ref_b)
-        ret = ref_a[ref_b], 1+tks_a+tks_b
+        ret = ref_a[ref_b]
     elif op == "i":
-        ret = index, 1
+        ret = index
     elif op == "&":
         r0 = eval_expr(tensor, ["r0"])
         if tensor.transpose is None:
@@ -60,31 +78,25 @@ def eval_expr(tensor, expr, index=None, pos=0):
         else:
             t_index = [index[tensor.transpose[i]] for i in range(len(index))]
         t_index = tuple(t_index)
-        ret = r0[t_index], 1
+        ret = r0[t_index]
     elif op == "r":
-        ret = tensor.regs, 1
+        ret = tensor.regs
     elif re.match("-?[0-9]+", op):
-        ret = int(op), 1
+        ret = int(op)
     elif re.match("d[0-9]+", op):
-        ret = tensor.data[int(op[1:])], 1
+        ret = tensor.data[int(op[1:])]
     elif re.match("i[0-9]+", op):
-        ret = index[int(op[1:])], 1
+        ret = index[int(op[1:])]
     else:
         raise NotImplementedError("Invalid token {}".format(op))
 
-    if type(ret[0]) is Functor:
-        ret = ret[0].eval(), ret[1]
+    if type(ret) is Functor:
+        ret = ret.eval()
 
-    if pos==0:
-        return ret[0]
-    else:
-        return ret
+    return ret
 
 def build_ast(ctx, tensor, expr, transpose=[], recurs=False):
-    if not recurs:
-        expr = list(expr)
-
-    op = expr.pop(0)
+    op = expr.take()
     if op == "+":
         add_a = build_ast(ctx, tensor, expr, transpose=transpose, recurs=True)
         add_b = build_ast(ctx, tensor, expr, transpose=transpose, recurs=True)
@@ -174,11 +186,10 @@ class Functor():
     def eval(self):
         import itertools
         import numpy
-        shape = list([eval_expr(self, s) for s in self.shape])
         data = []
-        for idx in itertools.product(*[range(s) for s in shape]):
-            data.append(eval_expr(self, self.dexpr, idx))
-        return numpy.array(data).reshape(shape)
+        for idx in itertools.product(*[range(s) for s in self.shape]):
+            data.append(eval_expr(self, Expr(self.dexpr), idx))
+        return numpy.array(data).reshape(self.shape)
 
     def build_cfg(self, ctx):
         shape  = list([eval_expr(self, s) for s in self.shape])
@@ -186,7 +197,7 @@ class Functor():
             ctx = new_ctx()
         ctx["symbols"][self.name] = (self.type, shape)
         ctx["cfg"].append(("for", shape))
-        ast = build_ast(ctx, self, self.dexpr)
+        ast = build_ast(ctx, self, Expr(self.dexpr))
         ctx["cfg"].append(("=", self, ast))
         ctx["cfg"].append(("endfor",))
 
