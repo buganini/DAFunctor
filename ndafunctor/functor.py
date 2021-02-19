@@ -45,9 +45,7 @@ def eval_expr(functor, expr, index=None):
         return expr
 
     op = expr.take()
-    if type(op) is Functor:
-        ret = op.eval()[functor.eval_index(index)]
-    elif op == "+":
+    if op == "+":
         add_a = eval_expr(functor, expr, index)
         add_b = eval_expr(functor, expr, index)
         ret = add_a + add_b
@@ -94,9 +92,7 @@ def eval_expr(functor, expr, index=None):
 
 def build_ast(ctx, functor, expr, idx_level=0):
     op = expr.take()
-    if type(op) is Functor:
-        return build_ast(ctx, op, Expr(op.dexpr))
-    elif op == "+":
+    if op == "+":
         add_a = build_ast(ctx, functor, expr)
         add_b = build_ast(ctx, functor, expr)
         return ("+", add_a, add_b)
@@ -118,8 +114,6 @@ def build_ast(ctx, functor, expr, idx_level=0):
         if type(ref_b) is list:
             ref_b = tuple(ref_b)
         return ("ref", ref_a, ref_b)
-    elif op == "i":
-        return ("term","idx")
     elif op == "d":
         data = []
         for r in functor.data:
@@ -248,15 +242,26 @@ class Functor():
             data = []
             if self.dexpr:
                 for idx in itertools.product(*[range(*s) for s in self.shape.slices()[0]]):
-                    data.append(eval_expr(self, Expr(self.dexpr), idx))
+                    data.append(eval_expr(self, Expr(self.dexpr), self.eval_index(idx)))
             else:
                 for i,slice in enumerate(self.shape.slices()):
                     offset = [x[0] for x in slice]
                     for idx in itertools.product(*[range(*s) for s in slice]):
                         functor = self.subs[i]
                         sub_idx = tuple(idx[i]-offset[i] for i in range(len(idx)))
-                        sub_idx = functor.eval_index(sub_idx)
+                        sub_idx = self.eval_index(sub_idx)
+                        # sub_idx = functor.eval_index(sub_idx)
+                        # print("self", self)
+                        # print("functor", functor)
+                        # print("eval", functor.eval())
+                        # print("idx", idx)
+                        # print("shape", functor.shape)
+                        # print("sub_idx",sub_idx)
+                        # print("tran_sub_idx",sub_idx)
                         data.append(functor.eval()[sub_idx])
+            # print("eval", self.desc)
+            # print(data)
+            # print("============")
             self.eval_cached = numpy.array(data).reshape(self.shape)
         return self.eval_cached
 

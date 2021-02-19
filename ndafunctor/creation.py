@@ -34,14 +34,14 @@ def raw_meshgrid(*args):
     subs = []
     for i in range(len(args)):
         subs.append(Functor(
-            [1]+shape[1:],
-            dexpr = ["ref","d","i{}".format(i+1)], # data[i{i0+1}]]
+            shape[1:],
+            dexpr = ["ref","d","i{}".format(i)], # data[i{i0+1}]]
             data = args[i],
             desc = "raw_meshgrid[{}]".format(i)
         ))
     return Functor(
         shape,
-        iexpr = [["i{}".format(i+1)] for i in range(len(args))],
+        iexpr = [["i{}".format(i)] for i in range(1,len(shape))],
         subs = subs,
         desc = "raw_meshgrid"
     )
