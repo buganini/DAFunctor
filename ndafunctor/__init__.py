@@ -1,5 +1,6 @@
 from .functor import *
-from .core import *
+from .creation import *
+from .manipulation import *
 from .gen_c import *
 
 def build_cfg(tensors):

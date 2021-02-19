@@ -1,4 +1,5 @@
 from .functor import Functor
+from .manipulation import *
 
 def arange(*args):
     if len(args) == 1:
@@ -16,17 +17,15 @@ def arange(*args):
     else:
         raise NotImplementedError("arange")
 
-    regs = [start,end,step]
-    n = ["//","-","r1","r0","r2"] # (end - start) // step
-    f = ["+","r0","*","i0","r2"] # start + i * step
-    return Functor(regs, [n], f)
-
-def transpose(tensor, dims):
-    rmap = [dims.index(i) for i in range(len(tensor.shape))]
-    regs = [tensor]
-    n = [tensor.shape[dims[i]] for i in range(len(tensor.shape))]
-    f = ["&"]
-    return Functor(regs, n, f, transpose=rmap)
+    data = [start,end,step]
+    shape = [(end - start) // step]
+    return Functor(
+        shape,
+        dexpr = ["+","d0","*","i0","d2"], # start + i * step
+        iexpr = [["i0"]],
+        data = data,
+        desc = "arange"
+    )
 
 def raw_meshgrid(*args):
     regs = args

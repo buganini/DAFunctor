@@ -36,6 +36,12 @@ def gen_c_expr(expr, output, indent=0):
             gen_c_expr(expr[2], output, indent=indent+1)
             output.write(";\n")
 
+    elif expr[0] == "idx":
+        output.write("idx")
+        output.write("[")
+        gen_c_expr(expr[1], output, indent=0)
+        output.write("]")
+
     elif expr[0] == "ref":
         gen_c_expr(expr[1], output, indent=0)
         output.write("[")
@@ -46,6 +52,13 @@ def gen_c_expr(expr, output, indent=0):
         output.write("(")
         gen_c_expr(expr[1], output, indent=0)
         output.write("+")
+        gen_c_expr(expr[2], output, indent=0)
+        output.write(")")
+
+    elif expr[0] == "*":
+        output.write("(")
+        gen_c_expr(expr[1], output, indent=0)
+        output.write("*")
         gen_c_expr(expr[2], output, indent=0)
         output.write(")")
 

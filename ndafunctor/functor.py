@@ -10,7 +10,7 @@
 
 ## Value
 #  i dimentional index
-#  r register value
+#  d data value
 
 import re
 
@@ -65,8 +65,8 @@ def eval_expr(tensor, expr, index=None, pos=0):
         ret = tensor.regs, 1
     elif re.match("-?[0-9]+", op):
         ret = int(op), 1
-    elif re.match("r[0-9]+", op):
-        ret = tensor.regs[int(op[1:])], 1
+    elif re.match("d[0-9]+", op):
+        ret = tensor.data[int(op[1:])], 1
     elif re.match("i[0-9]+", op):
         ret = index[int(op[1:])], 1
     else:
@@ -83,9 +83,6 @@ def eval_expr(tensor, expr, index=None, pos=0):
 def build_ast(ctx, tensor, expr, transpose=[], recurs=False):
     if not recurs:
         expr = list(expr)
-
-    if tensor.transpose:
-        ctx["data"]["trans{}".format("_".join([str(x) for x in tensor.transpose]))] = ("int", tensor.transpose)
 
     op = expr.pop(0)
     if op == "+":
@@ -109,66 +106,56 @@ def build_ast(ctx, tensor, expr, transpose=[], recurs=False):
         ref_b = build_ast(ctx, tensor, expr, transpose=transpose, recurs=True)
         if type(ref_b) is list:
             ref_b = tuple(ref_b)
-        if ref_a == "idx":
-            st = ref_b
-            for t in [tensor.transpose]+transpose:
-                if t:
-                    st = ("ref", "trans{}".format("_".join([str(x) for x in t])), st)
-            return ("ref", ref_a, st)
-        else:
-            return ("ref", ref_a, ref_b)
+        return ("ref", ref_a, ref_b)
     elif op == "i":
-        return "idx"
+        return ("term","idx")
     elif op == "&":
         r0 = tensor.regs[0]
         r0_cfg = build_ast(ctx, r0, r0.func, transpose=[tensor.transpose]+transpose)
         return r0_cfg
-    elif op == "r":
+    elif op == "d":
         regs = []
         for r in tensor.regs:
-            name = "reg{}".format(id(r))
+            name = "data{}".format(id(r))
             ctx["data"][name] = ("float", r)
             regs.append(name)
-        name = "reg{}".format(id(tensor.regs))
+        name = "data{}".format(id(tensor.regs))
         ctx["data"][name] = ("float *", regs)
         return name
     elif re.match("-?[0-9]+", op):
-        return op
-    elif re.match("r[0-9]+", op):
-        return tensor.regs[int(op[1:])]
+        return ("term",op)
+    elif re.match("d[0-9]+", op):
+        return ("term", str(tensor.data[int(op[1:])]))
     elif re.match("i[0-9]+", op):
-        i = op[1:]
-        st = i
-        for t in [tensor.transpose]+transpose:
-            if t:
-                st = ("ref", "trans{}".format("_".join([str(x) for x in t])), st)
-        return ("ref","idx",st)
+        return ("idx", op[1:])
     else:
         raise NotImplementedError("Invalid token {}".format(op))
 
 class Functor():
-    def __init__(self, regs, shape, func, transpose=None, offset=None):
-        self.regs = regs
+    def __init__(self, shape, dtype=None, dexpr=None, iexpr=None, data=None, subs=None, desc=None):
+        # external perspective
         self.shape = shape
-        self.func = func
-        self.transpose = transpose
-        self.offset = offset
-        self.type = None
+        self.dtype = dtype
+        self.desc = desc
+
+        # internal perspective
+        self.dexpr = dexpr # data expression
+        self.iexpr = iexpr # index expression
+        self.data = data # static data
+        self.subs = subs # sub functors
+
+        # runtime
         self.name = None
         self.generated = False
 
     def __str__(self):
-        return "" \
-            f"Offset: {self.offset}\n" \
-            f"Shape: {self.shape}\n" \
-            f"Func: {self.func}\n" \
-            f"Regs: {self.regs}\n"
+        return self.__repr__()
 
     def __repr__(self):
-        return "Tensor: transpose={transpose}, offset={offset}".format(transpose=self.transpose, offset=self.offset)
+        return "Functor(desc={desc} shape={shape})".format(desc=self.desc, shape=self.shape)
 
     def __len__(self):
-        return eval_expr(self, self.shape[0])
+        return self.shape[0]
 
     def __getitem__(self, idx):
         if idx < len(self):
@@ -190,7 +177,7 @@ class Functor():
         shape = list([eval_expr(self, s) for s in self.shape])
         data = []
         for idx in itertools.product(*[range(s) for s in shape]):
-            data.append(eval_expr(self, self.func, idx))
+            data.append(eval_expr(self, self.dexpr, idx))
         return numpy.array(data).reshape(shape)
 
     def build_cfg(self, ctx):
@@ -199,7 +186,7 @@ class Functor():
             ctx = new_ctx()
         ctx["symbols"][self.name] = (self.type, shape)
         ctx["cfg"].append(("for", shape))
-        ast = build_ast(ctx, self, self.func)
+        ast = build_ast(ctx, self, self.dexpr)
         ctx["cfg"].append(("=", self, ast))
         ctx["cfg"].append(("endfor",))
 
