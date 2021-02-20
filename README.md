@@ -4,9 +4,12 @@
     * Dynamic transpose
 
 # Supported operations
-* arange
-* meshgrid (xy)
-* transpose
+* creation
+    * arange
+    * meshgrid (xy)
+* manipulation
+    * transpose
+    * stack
 
 # Example
 ```

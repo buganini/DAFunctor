@@ -77,7 +77,7 @@ def eval_expr(functor, expr, index=None):
     elif re.match("d[0-9]+", op):
         ret = functor.data[int(op[1:])]
     elif re.match("i[0-9]+", op):
-        # expr.dump()
+        # expr.print()
         # print(index)
         ret = index[int(op[1:])]
     else:
