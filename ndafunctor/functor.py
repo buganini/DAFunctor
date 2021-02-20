@@ -143,7 +143,7 @@ class Shape():
             dslices = []
             b = 0
             for e in axis_slices:
-                dslices.append((b,e))
+                dslices.append((b,e-b))
                 b = e
             ret.append(dslices)
         return list(itertools.product(*ret))
@@ -262,15 +262,13 @@ class Functor():
             import numpy
             data = []
             if self.dexpr:
-                for idx in itertools.product(*[range(*s) for s in self.shape.slices()[0]]):
+                for idx in itertools.product(*[range(b,b+n) for b,n in self.shape.slices()[0]]):
                     data.append(eval_expr(self, Expr(self.dexpr), self.eval_index(idx)))
             else:
                 for i,slice in enumerate(self.shape.slices()):
-                    offset = [x[0] for x in slice]
-                    for idx in itertools.product(*[range(*s) for s in slice]):
+                    for idx in itertools.product(*[range(b,b+n) for b,n in slice]):
                         functor = self.subs[i]
-                        sub_idx = tuple(idx[i]-offset[i] for i in range(len(idx)))
-                        sub_idx = self.eval_index(sub_idx)
+                        sub_idx = self.eval_index(idx)
                         # sub_idx = functor.eval_index(sub_idx)
                         # print("self", self)
                         # print("functor", functor)
