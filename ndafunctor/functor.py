@@ -208,7 +208,7 @@ class Functor():
 
         # internal perspective
         self.dexpr = dexpr # data expression, evaluate from index/data to value
-        self.iexpr = iexpr # index expression, evaluate from sub-functor index to index in current scope
+        self.iexpr = iexpr # index expression, evaluate from sub-functor index to index for this functor
         self.data = data # static data
         self.subs = subs # sub functors
 
