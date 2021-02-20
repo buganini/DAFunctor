@@ -7,7 +7,8 @@
 #  ref reference
 
 ## Value
-#  i dimentional index
+#  i{n} index on n-th axis
+#  f{n} n-th sub-functor
 #  d data value
 
 import re
@@ -71,16 +72,13 @@ def eval_expr(functor, expr, index=None):
         ret = ref_a[ref_b]
     elif op == "d":
         ret = functor.data
-    elif op == "s":
-        n = eval_expr(functor, expr, index)
-        ret = functor.subs[n]
-        # print(ret)
     elif re.match("-?[0-9]+", op):
         ret = int(op)
     elif re.match("d[0-9]+", op):
         ret = functor.data[int(op[1:])]
     elif re.match("i[0-9]+", op):
-        # print(op)
+        # expr.dump()
+        # print(index)
         ret = index[int(op[1:])]
     else:
         raise NotImplementedError("Invalid token {}".format(op))
@@ -186,8 +184,8 @@ class Functor():
         self.desc = desc
 
         # internal perspective
-        self.dexpr = dexpr # data expression, evaluate to value
-        self.iexpr = iexpr # index expression, evaluate from external index to internal index
+        self.dexpr = dexpr # data expression, evaluate from index/data to value
+        self.iexpr = iexpr # index expression, evaluate from sub-functor index to index in current scope
         self.data = data # static data
         self.subs = subs # sub functors
 
@@ -260,28 +258,31 @@ class Functor():
         if self.eval_cached is None:
             import itertools
             import numpy
-            data = []
+            data = numpy.zeros(self.shape)
             if self.dexpr:
-                for idx in itertools.product(*[range(b,b+n) for b,n in self.shape.slices()[0]]):
-                    data.append(eval_expr(self, Expr(self.dexpr), self.eval_index(idx)))
+                slice = self.shape.slices()[0]
+                offset = [x[0] for x in slice]
+                for idx in itertools.product(*[range(b,b+n) for b,n in slice]):
+                    pidx = self.eval_index(idx)
+                    data[pidx] = eval_expr(self, Expr(self.dexpr), idx)
             else:
                 for i,slice in enumerate(self.shape.slices()):
-                    for idx in itertools.product(*[range(b,b+n) for b,n in slice]):
-                        functor = self.subs[i]
-                        sub_idx = self.eval_index(idx)
-                        # sub_idx = functor.eval_index(sub_idx)
-                        # print("self", self)
+                    functor = self.subs[i]
+                    base = [x[0] for x in slice]
+                    for idx in itertools.product(*[range(n) for n in functor.shape]):
+                        pidx = tuple([sum(x) for x in zip(base, self.eval_index(idx))])
                         # print("functor", functor)
                         # print("eval", functor.eval())
-                        # print("idx", idx)
+                        # print("slice", slice)
                         # print("shape", functor.shape)
-                        # print("sub_idx",sub_idx)
-                        # print("tran_sub_idx",sub_idx)
-                        data.append(functor.eval()[sub_idx])
+                        # print("idx",idx,"base",base)
+                        # print("pidx",pidx)
+                        # print("data",data.shape)
+                        data[pidx] = functor.eval()[idx]
             # print("eval", self.desc)
             # print(data)
             # print("============")
-            self.eval_cached = numpy.array(data).reshape(self.shape)
+            self.eval_cached = data
         return self.eval_cached
 
     def build_idx(self, ctx, idx_level=0):
