@@ -5,6 +5,9 @@
 
 # Supported operations
 * creation
+    * zeros
+    * ones
+    * full
     * arange
     * meshgrid (xy)
 * manipulation

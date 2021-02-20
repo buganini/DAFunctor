@@ -1,6 +1,27 @@
 from .functor import Functor
 from .manipulation import *
 
+def zeros(shape):
+    return Functor(
+        shape,
+        dexpr = [0],
+        desc = "zeros"
+    )
+
+def ones(shape):
+    return Functor(
+        shape,
+        dexpr = [1],
+        desc = "ones"
+    )
+
+def full(shape, fill_value):
+    return Functor(
+        shape,
+        dexpr = [fill_value],
+        desc = "full"
+    )
+
 def arange(*args):
     if len(args) == 1:
         start = 0

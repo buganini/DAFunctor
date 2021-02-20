@@ -27,6 +27,9 @@ class Expr():
         self.expr = expr
         self.pos = 0
 
+    def __getitem__(self, idx):
+        return str(self.expr[idx])
+
     def take(self):
         try:
             ret = self.expr[self.pos]
@@ -334,7 +337,7 @@ class Functor():
         if self.dexpr:
             slice = self.shape.slices()[0]
             offset = [x[0] for x in slice]
-            for e in self.dexpr:
+            for e in Expr(self.dexpr):
                 if re.match(r"f[0-9]+", e):
                     i = int(e[1:])
                     sf = self.subs[i]

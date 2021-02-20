@@ -131,13 +131,10 @@ def gen_c(ctx, output, indent=0):
     output.write("// Check outputs\n");
     for sym_name in ctx["symbols"]:
         dtype, shape = ctx["symbols"][sym_name]
-        size = 1
-        for s in shape:
-            size *= s
         output.write(" "*(indent+1)*intent_spaces)
         output.write("printf(\"{}\\n\");\n".format(sym_name))
         output.write(" "*(indent+1)*intent_spaces)
-        output.write("for(int i=0;i<{};i++){{\n".format(size))
+        output.write("for(int i=0;i<{};i++){{\n".format(shape.size()))
 
         output.write(" "*(indent+2)*intent_spaces)
         output.write("printf(\"%.2f \", {}[i]);\n".format(sym_name));
