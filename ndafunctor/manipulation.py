@@ -21,3 +21,15 @@ def stack(array, axis=0):
         desc = "stack_{}".format(axis),
         subs = array
     )
+
+def expand_dims(a, axis):
+    iexpr = [["i{}".format(i) for i in range(len(a.shape))]]
+    iexpr.insert(axis, [0])
+    shape = list(a.shape)
+    shape.insert(axis, 1)
+    return Functor(
+        shape,
+        iexpr = iexpr,
+        desc = "expand_dims_{}_{}".format(axis, a.desc),
+        subs = [a]
+    )
