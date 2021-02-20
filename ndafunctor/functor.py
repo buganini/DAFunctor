@@ -177,8 +177,11 @@ class Shape():
         return ret
 
 class Functor():
+    acc = 0
     def __init__(self, shape, dtype=None, dexpr=None, iexpr=None, data=None, subs=None, desc=None):
         # external perspective
+        self.id = Functor.acc
+        Functor.acc += 1
         self.shape = Shape(shape)
         self.dtype = dtype
         self.desc = desc
@@ -199,6 +202,7 @@ class Functor():
 
     def __repr__(self):
         d = []
+        d.append("id={}".format(self.id ))
         d.append("desc={}".format(self.desc))
         d.append("shape={}".format(self.shape))
         if self.iexpr:
@@ -223,7 +227,7 @@ class Functor():
     def print(self, indent=0, suffix=""):
         indent__num = 4
         print(" "*indent*indent__num, end="")
-        print("Functor{}:".format(suffix))
+        print("Functor{}: #{}".format(suffix, self.id))
 
         print(" "*(indent+1)*indent__num, end="")
         print("{}".format(self.desc))
