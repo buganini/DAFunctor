@@ -1,3 +1,4 @@
+import functools
 from .functor import *
 
 intent_spaces = 4
@@ -136,8 +137,20 @@ def gen_c(ctx, output, indent=0):
         output.write(" "*(indent+1)*intent_spaces)
         output.write("for(int i=0;i<{};i++){{\n".format(shape.size()))
 
+        for i in range(len(shape)):
+            output.write(" "*(indent+2)*intent_spaces)
+            output.write("if(i % {} == 0) printf(\"[\");\n".format(functools.reduce(lambda a,b:a*b, shape[i:])))
+
         output.write(" "*(indent+2)*intent_spaces)
-        output.write("printf(\"%.2f \", {}[i]);\n".format(sym_name));
+        output.write("printf(\"%.2f\", {}[i]);\n".format(sym_name));
+
+        output.write(" "*(indent+2)*intent_spaces)
+        output.write("int print_space=1;\n")
+        for i in range(len(shape)):
+            output.write(" "*(indent+2)*intent_spaces)
+            output.write("if((i+1) % {} == 0){{ printf(\"]\"); print_space=0; }}\n".format(functools.reduce(lambda a,b:a*b, shape[i:])))
+        output.write(" "*(indent+2)*intent_spaces)
+        output.write("if(print_space) printf(\" \");\n")
 
         output.write(" "*(indent+1)*intent_spaces)
         output.write("}\n")

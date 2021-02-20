@@ -35,8 +35,8 @@ ndafunctor [[[1. 2.]
   [4. 4.]
   [5. 5.]]]
 ===== CFG =====
-{'data': OrderedDict([('data140430957614912', ('float', [1, 2])),
-                      ('data140430953278592', ('float', [3, 4, 5]))]),
+{'data': OrderedDict([('data139821754319552', ('float', [1, 2])),
+                      ('data139821748908288', ('float', [3, 4, 5]))]),
  'stmt': [('for', [2, 3]),
           ('def', ('idx', 0, 1), ('term', '0')),
           ('def', ('idx', 1, 1), ('idx', 0, 0)),
@@ -46,7 +46,7 @@ ndafunctor [[[1. 2.]
           ('def', ('idx', 2, 2), ('idx', 1, 1)),
           ('=',
            Functor(id=3, desc=transposed_raw_meshgrid, shape=[[2], [3], [2]], iexpr=[['i0'], ['i2'], ['i1']], subs=1),
-           ('ref', 'data140430957614912', ('idx', 0, 0)),
+           ('ref', 'data139821754319552', ('idx', 0, 0)),
            2),
           ('undef', ('idx', 2, 2)),
           ('undef', ('idx', 1, 2)),
@@ -64,7 +64,7 @@ ndafunctor [[[1. 2.]
           ('def', ('idx', 2, 2), ('idx', 1, 1)),
           ('=',
            Functor(id=3, desc=transposed_raw_meshgrid, shape=[[2], [3], [2]], iexpr=[['i0'], ['i2'], ['i1']], subs=1),
-           ('ref', 'data140430953278592', ('idx', 1, 0)),
+           ('ref', 'data139821748908288', ('idx', 1, 0)),
            2),
           ('undef', ('idx', 2, 2)),
           ('undef', ('idx', 1, 2)),
@@ -73,7 +73,7 @@ ndafunctor [[[1. 2.]
           ('undef', ('idx', 1, 1)),
           ('undef', ('idx', 0, 1)),
           ('endfor',)],
- 'symbols': OrderedDict([('output', ('float', [2, 3, 2]))])}
+ 'symbols': OrderedDict([('output', ('float', [[2], [3], [2]]))])}
 ===== C =====
 Generated tests/../test-build/meshgrid_data.py.c
 #include <stdio.h>
@@ -82,8 +82,8 @@ Generated tests/../test-build/meshgrid_data.py.c
 float output[12];
 
 // Data
-float data140430957614912[] = {1,2};
-float data140430953278592[] = {3,4,5};
+float data139821754319552[] = {1,2};
+float data139821748908288[] = {3,4,5};
 
 int main(int argc, char *argv[]){
     for(int i0=0;i0<2;i0++)
@@ -95,7 +95,7 @@ int main(int argc, char *argv[]){
 #define I0_2 (I0_1)
 #define I1_2 (I2_1)
 #define I2_2 (I1_1)
-        output[I0_2*3*2 + I1_2*2 + I2_2] = data140430957614912[i0];
+        output[I0_2*3*2 + I1_2*2 + I2_2] = data139821754319552[i0];
 #undef I2_2
 #undef I1_2
 #undef I0_2
@@ -112,7 +112,7 @@ int main(int argc, char *argv[]){
 #define I0_2 (I0_1)
 #define I1_2 (I2_1)
 #define I2_2 (I1_1)
-        output[I0_2*3*2 + I1_2*2 + I2_2] = data140430953278592[i1];
+        output[I0_2*3*2 + I1_2*2 + I2_2] = data139821748908288[i1];
 #undef I2_2
 #undef I1_2
 #undef I0_2
@@ -124,12 +124,20 @@ int main(int argc, char *argv[]){
     // Check outputs
     printf("output\n");
     for(int i=0;i<12;i++){
-        printf("%.2f ", output[i]);
+        if(i % 12 == 0) printf("[");
+        if(i % 6 == 0) printf("[");
+        if(i % 2 == 0) printf("[");
+        printf("%.2f", output[i]);
+        int print_space=1;
+        if((i+1) % 12 == 0){ printf("]"); print_space=0; }
+        if((i+1) % 6 == 0){ printf("]"); print_space=0; }
+        if((i+1) % 2 == 0){ printf("]"); print_space=0; }
+        if(print_space) printf(" ");
     }
     printf("\n");
     return 0;
 }
 
 output
-1.00 2.00 1.00 2.00 1.00 2.00 3.00 3.00 4.00 4.00 5.00 5.00
+[[[1.00 2.00][1.00 2.00][1.00 2.00]][[3.00 3.00][4.00 4.00][5.00 5.00]]]
 ```
