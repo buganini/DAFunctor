@@ -10,6 +10,7 @@
 * manipulation
     * transpose
     * stack
+    * concatenate
     * expand_dims
 
 # Example

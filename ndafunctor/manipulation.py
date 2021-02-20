@@ -22,6 +22,17 @@ def stack(array, axis=0):
         subs = array
     )
 
+def concatenate(array, axis=0):
+    iexpr = [["i{}".format(i) for i in range(len(array[0].shape))]]
+    shape = list(array[0].shape)
+    shape[axis] = [shape[axis]*(i+1) for i in range(len(array))]
+    return Functor(
+        shape,
+        iexpr = iexpr,
+        desc = "concatenate",
+        subs = array
+    )
+
 def expand_dims(a, axis):
     iexpr = [["i{}".format(i) for i in range(len(a.shape))]]
     iexpr.insert(axis, [0])
