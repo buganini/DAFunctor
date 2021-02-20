@@ -10,10 +10,9 @@ def gen_c_expr(expr, output, indent=0):
     if expr[0] == "for":
         shape = expr[1]
         output.write(" "*indent*intent_spaces)
-        output.write("int idx[{}];\n".format(len(shape)))
         for i in range(len(shape)):
             output.write(" "*indent*intent_spaces)
-            output.write("{}for(idx[{i}]=0;idx[{i}]<{n};idx[{i}]++)\n".format(" "*i*2, i=i, n=shape[i]))
+            output.write("{}for(int i{i}=0;i{i}<{n};i{i}++)\n".format(" "*i*2, i=i, n=shape[i]))
         output.write(" "*indent*intent_spaces)
         output.write("{\n")
 
@@ -26,7 +25,7 @@ def gen_c_expr(expr, output, indent=0):
             tensor = expr[1]
             idx = []
             for i in range(len(tensor.shape)):
-                didx = ["idx[{}]".format(i)]
+                didx = ["i{}".format(i)]
                 for j in range(i+1,len(tensor.shape)):
                     didx.append("{}".format(tensor.shape[j]))
                 idx.append("*".join(didx))
@@ -37,10 +36,8 @@ def gen_c_expr(expr, output, indent=0):
             output.write(";\n")
 
     elif expr[0] == "idx":
-        output.write("idx")
-        output.write("[")
+        output.write("i")
         gen_c_expr(expr[1], output, indent=0)
-        output.write("]")
 
     elif expr[0] == "ref":
         gen_c_expr(expr[1], output, indent=0)

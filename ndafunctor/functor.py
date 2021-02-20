@@ -245,8 +245,8 @@ class Functor():
             s.print(indent+1, suffix="[{}]".format(i))
 
 
-    def output(self, type, name):
-        self.type = type
+    def output(self, dtype, name):
+        self.dtype = dtype
         self.name = name
 
     def eval_index(self, index):
