@@ -39,7 +39,7 @@ def raw_meshgrid(*args):
             data = args[i],
             desc = "raw_meshgrid[{}]".format(i)
         ))
-    iexpr = [["0"]]
+    iexpr = [[0]]
     for i in range(len(shape)-1):
         iexpr.append(["i{}".format(i)])
     return Functor(

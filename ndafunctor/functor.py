@@ -147,7 +147,7 @@ def build_ast(ctx, expr, data, depth):
         i = int(op[1:])
         return ("term", data[i])
     elif re.match("i[0-9]+", op):
-        return ("idx", op[1:], depth)
+        return ("idx", int(op[1:]), depth)
     else:
         raise NotImplementedError("Invalid token {}".format(op))
 
