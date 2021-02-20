@@ -11,6 +11,8 @@ def transpose(functor, dims):
     )
 
 def stack(array, axis=0):
+    if axis < 0:
+        axis = len(array[0].shape) + axis
     iexpr = [["i{}".format(i) for i in range(len(array[0].shape))]]
     iexpr.insert(axis, [0])
     shape = list(array[0].shape)
