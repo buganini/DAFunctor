@@ -95,11 +95,8 @@ def gen_c(ctx, output, indent=0):
         output.write("// Tensors\n");
     for sym_name in ctx["symbols"]:
         dtype, shape = ctx["symbols"][sym_name]
-        size = 1
-        for s in shape:
-            size *= s
         output.write(" "*indent*intent_spaces)
-        output.write("{dtype} {name}[{size}];\n".format(dtype=dtype, name=sym_name, size=size));
+        output.write("{dtype} {name}[{size}];\n".format(dtype=dtype, name=sym_name, size=shape.size()));
     if ctx["symbols"]:
         output.write("\n")
 

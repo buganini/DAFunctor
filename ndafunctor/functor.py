@@ -179,9 +179,11 @@ class Shape():
     def __getitem__(self, idx):
         return [x[-1] for x in self.shape][idx]
 
-    def split(self, slice):
-        for i in range(len(self.shape)):
-            pass
+    def size(self):
+        size = 1
+        for s in self:
+            size *= s
+        return size
 
     def ensure_list(self, shape):
         if type(shape) is Shape:
@@ -308,10 +310,9 @@ class Functor():
         return self.eval_cached
 
     def build_cfg(self, ctx):
-        shape  = list([eval_expr(self, s) for s in self.shape])
         if ctx is None:
             ctx = new_ctx()
-        ctx["symbols"][self.name] = (self.dtype, shape)
+        ctx["symbols"][self.name] = (self.dtype, self.shape)
 
         for slice, spec, offset in self.build_blocks():
             ctx["stmt"].append(("for", [x[1] for x in slice]))
