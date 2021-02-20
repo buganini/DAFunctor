@@ -1,10 +1,16 @@
 # NOTICE
-* Variable-dimension tensor is not supported
-* Compile/Run-time is kind of vague
+* Runtime axis operations are not supported, such as:
+    * Dynamic shape
+    * Dynamic transpose
+
+# Supported operations
+* arange
+* meshgrid (xy)
+* transpose
 
 # Example
 ```
-> python3 tests/0.py
+> python3 tests/meshgrid_data.py
 
 numpy [[[1 2]
   [1 2]
@@ -13,70 +19,109 @@ numpy [[[1 2]
  [[3 3]
   [4 4]
   [5 5]]]
-intro-tensor [[[1 2]
-  [1 2]
-  [1 2]]
+ndafunctor [[[1. 2.]
+  [1. 2.]
+  [1. 2.]]
 
- [[3 3]
-  [4 4]
-  [5 5]]]
+ [[3. 3.]
+  [4. 4.]
+  [5. 5.]]]
 ===== CFG =====
-{'cfg': [('for', [2, 3, 2]),
-         ('=',
-          Tensor: transpose=[0, 2, 1], offset=None,
-          ('ref',
-           ('ref',
-            'reg139881170331456',
-            ('ref', 'idx', ('ref', 'trans0_2_1', '0'))),
-           ('ref',
-            'idx',
-            ('ref',
-             'trans0_2_1',
-             ('+', ('ref', 'idx', ('ref', 'trans0_2_1', '0')), '1'))))),
-         ('endfor',)],
- 'data': OrderedDict([('trans0_2_1', ('int', [0, 2, 1])),
-                      ('reg139881170472128', ('float', [1, 2])),
-                      ('reg139881165467776', ('float', [3, 4, 5])),
-                      ('reg139881170331456',
-                       ('float *',
-                        ['reg139881170472128', 'reg139881165467776']))]),
+{'data': OrderedDict([('data139893694838656', ('float', [1, 2])),
+                      ('data139893690502016', ('float', [3, 4, 5]))]),
+ 'stmt': [('for', [2, 3]),
+          ('def', ('idx', 0, 1), ('term', '0')),
+          ('def', ('idx', 1, 1), ('idx', '0', 0)),
+          ('def', ('idx', 2, 1), ('idx', '1', 0)),
+          ('def', ('idx', 0, 2), ('idx', '0', 1)),
+          ('def', ('idx', 1, 2), ('idx', '2', 1)),
+          ('def', ('idx', 2, 2), ('idx', '1', 1)),
+          ('=',
+           Functor(id=3, desc=transposed_raw_meshgrid, shape=[[2], [3], [2]], iexpr=[['i0'], ['i2'], ['i1']], subs=1),
+           ('ref', 'data139893694838656', ('idx', '0', 0)),
+           2),
+          ('undef', ('idx', 2, 2)),
+          ('undef', ('idx', 1, 2)),
+          ('undef', ('idx', 0, 2)),
+          ('undef', ('idx', 2, 1)),
+          ('undef', ('idx', 1, 1)),
+          ('undef', ('idx', 0, 1)),
+          ('endfor',),
+          ('for', [2, 3]),
+          ('def', ('idx', 0, 1), ('+', ('term', '0'), ('term', '1'))),
+          ('def', ('idx', 1, 1), ('idx', '0', 0)),
+          ('def', ('idx', 2, 1), ('idx', '1', 0)),
+          ('def', ('idx', 0, 2), ('idx', '0', 1)),
+          ('def', ('idx', 1, 2), ('idx', '2', 1)),
+          ('def', ('idx', 2, 2), ('idx', '1', 1)),
+          ('=',
+           Functor(id=3, desc=transposed_raw_meshgrid, shape=[[2], [3], [2]], iexpr=[['i0'], ['i2'], ['i1']], subs=1),
+           ('ref', 'data139893690502016', ('idx', '1', 0)),
+           2),
+          ('undef', ('idx', 2, 2)),
+          ('undef', ('idx', 1, 2)),
+          ('undef', ('idx', 0, 2)),
+          ('undef', ('idx', 2, 1)),
+          ('undef', ('idx', 1, 1)),
+          ('undef', ('idx', 0, 1)),
+          ('endfor',)],
  'symbols': OrderedDict([('output', ('float', [2, 3, 2]))])}
- ===== C =====
-...
-```
-
-# Test generated C code
-```
+===== C =====
+Generated tests/../test-build/meshgrid_data.py.c
 #include <stdio.h>
 
 // Tensors
 float output[12];
 
 // Data
-int trans0_2_1[] = {0,2,1};
-float reg139881170472128[] = {1,2};
-float reg139881165467776[] = {3,4,5};
-float * reg139881170331456[] = {reg139881170472128,reg139881165467776};
+float data139893694838656[] = {1,2};
+float data139893690502016[] = {3,4,5};
 
 int main(int argc, char *argv[]){
-    int idx[3];
-    for(idx[0]=0;idx[0]<2;idx[0]++)
-      for(idx[1]=0;idx[1]<3;idx[1]++)
-        for(idx[2]=0;idx[2]<2;idx[2]++)
+    for(int i0=0;i0<2;i0++)
+      for(int i1=0;i1<3;i1++)
     {
-        output[idx[0]*3*2 + idx[1]*2 + idx[2]] = reg139881170331456[idx[trans0_2_1[0]]][idx[trans0_2_1[(idx[trans0_2_1[0]]+1)]]];
+#define I0_1 (0)
+#define I1_1 (i0)
+#define I2_1 (i1)
+#define I0_2 (I0_1)
+#define I1_2 (I2_1)
+#define I2_2 (I1_1)
+        output[I0_2*3*2 + I1_2*2 + I2_2] = data139893694838656[i0];
+#undef I2_2
+#undef I1_2
+#undef I0_2
+#undef I2_1
+#undef I1_1
+#undef I0_1
+    }
+    for(int i0=0;i0<2;i0++)
+      for(int i1=0;i1<3;i1++)
+    {
+#define I0_1 ((0+1))
+#define I1_1 (i0)
+#define I2_1 (i1)
+#define I0_2 (I0_1)
+#define I1_2 (I2_1)
+#define I2_2 (I1_1)
+        output[I0_2*3*2 + I1_2*2 + I2_2] = data139893690502016[i1];
+#undef I2_2
+#undef I1_2
+#undef I0_2
+#undef I2_1
+#undef I1_1
+#undef I0_1
     }
 
-
-    // Check output
-    for(int i=0;i<12;i+=1){
-        printf("%f ", output[i]);
+    // Check outputs
+    printf("output\n");
+    for(int i=0;i<12;i++){
+        printf("%.2f ", output[i]);
     }
-
+    printf("\n");
     return 0;
 }
 
-
-Output:
-1.000000 2.000000 1.000000 2.000000 1.000000 2.000000 3.000000 3.000000 4.000000 4.000000 5.000000 5.000000
+output
+1.00 2.00 1.00 2.00 1.00 2.00 3.00 3.00 4.00 4.00 5.00 5.00
 ```

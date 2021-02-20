@@ -9,7 +9,6 @@ def gen_c_expr(expr, output, indent=0):
 
     if expr[0] == "for":
         shape = expr[1]
-        output.write(" "*indent*intent_spaces)
         for i in range(len(shape)):
             output.write(" "*indent*intent_spaces)
             output.write("{}for(int i{i}=0;i{i}<{n};i{i}++)\n".format(" "*i*2, i=i, n=shape[i]))
@@ -23,21 +22,42 @@ def gen_c_expr(expr, output, indent=0):
     elif expr[0] == "=":
         if type(expr[1]) is Functor:
             tensor = expr[1]
+            symbols = expr[2]
+            depth = expr[3]
             idx = []
             for i in range(len(tensor.shape)):
-                didx = ["i{}".format(i)]
+                if depth:
+                    didx = ["I{}_{}".format(i, depth)]
+                else:
+                    didx = ["i{}".format(i)]
                 for j in range(i+1,len(tensor.shape)):
                     didx.append("{}".format(tensor.shape[j]))
                 idx.append("*".join(didx))
             idx = " + ".join(idx)
             output.write(" "*(indent+1)*intent_spaces)
             output.write("{name}[{idx}] = ".format(name=tensor.name, idx=idx))
-            gen_c_expr(expr[2], output, indent=indent+1)
+            gen_c_expr(symbols, output, indent=indent+1)
             output.write(";\n")
 
     elif expr[0] == "idx":
-        output.write("i")
+        if expr[2]==0:
+            output.write("i{}".format(expr[1]))
+        else:
+            output.write("I{}_{}".format(expr[1], expr[2]))
+
+    elif expr[0] == "def":
+        output.write("#define ")
         gen_c_expr(expr[1], output, indent=0)
+        output.write(" ")
+        output.write("(")
+        gen_c_expr(expr[2], output, indent=0)
+        output.write(")")
+        output.write("\n")
+
+    elif expr[0] == "undef":
+        output.write("#undef ")
+        gen_c_expr(expr[1], output, indent=0)
+        output.write("\n")
 
     elif expr[0] == "ref":
         gen_c_expr(expr[1], output, indent=0)
@@ -60,7 +80,7 @@ def gen_c_expr(expr, output, indent=0):
         output.write(")")
 
     elif expr[0] == "term":
-        output.write(expr[1])
+        output.write(str(expr[1]))
 
     else:
         raise NotImplementedError("Unknown expr op {}".format(expr[0]))
@@ -105,7 +125,7 @@ def gen_c(ctx, output, indent=0):
 
     output.write(" "*indent*intent_spaces)
     output.write("int main(int argc, char *argv[]){\n")
-    for expr in ctx["cfg"]:
+    for expr in ctx["stmt"]:
         gen_c_expr(expr, output, indent=indent+1)
 
     output.write("\n");

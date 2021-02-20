@@ -18,7 +18,7 @@ def new_ctx():
     ctx = {
         "symbols": OrderedDict(),
         "data": OrderedDict(),
-        "cfg": []
+        "stmt": [],
     }
     return ctx
 
@@ -31,11 +31,11 @@ class Expr():
         try:
             ret = self.expr[self.pos]
             self.pos += 1
-            return ret
+            return str(ret)
         except:
             raise IndexError("Index out of ", self.expr)
 
-    def dump(self):
+    def print(self):
         print(self.expr[:self.pos], "<cursor>", self.expr[self.pos:])
 
 def eval_expr(functor, expr, index=None):
@@ -88,45 +88,66 @@ def eval_expr(functor, expr, index=None):
 
     return ret
 
-def build_ast(ctx, functor, expr, idx_level=0):
+def build_stmt(ctx, functor, spec, offset, path=tuple(), subs=[], data=[]):
+    if functor.dexpr:
+        subs = []
+        ddepth = 0
+        for i in range(len(functor.subs)):
+            spath = tuple((*path, i))
+            sub, sdepth = build_stmt(ctx, functor.subs[i], spec, offset, spath, functor.subs[i].data)
+            for d,iexpr in enumerate(functor.iexpr):
+                if path in offset and offset[path][d]:
+                    iexpr = ["+"] + iexpr + [offset[path][d]]
+                ctx["map"].append((("idx", d, sdepth+1), build_ast(ctx, Expr(iexpr), functor.subs[i].data, sdepth)))
+            ddepth = sdepth + 1
+            subs.append(sub)
+        return build_ast(ctx, Expr(functor.dexpr), functor.data, ddepth), ddepth
+    else:
+        i = spec[path]
+        spath = tuple((*path, i))
+        sym, sdepth = build_stmt(ctx, functor.subs[i], spec, offset, spath, functor.subs[i].data)
+        if functor.iexpr:
+            for d,iexpr in enumerate(functor.iexpr):
+                if path in offset and offset[path][d]:
+                    iexpr = ["+"] + iexpr + [offset[path][d]]
+                ctx["map"].append((("idx", d, sdepth+1), build_ast(ctx, Expr(iexpr), functor.subs[i].data, sdepth)))
+        return sym, sdepth+1
+
+def build_ast(ctx, expr, data, depth):
     op = expr.take()
     if op == "+":
-        add_a = build_ast(ctx, functor, expr)
-        add_b = build_ast(ctx, functor, expr)
+        add_a = build_ast(ctx, expr, data, depth)
+        add_b = build_ast(ctx, expr, data, depth)
         return ("+", add_a, add_b)
     elif op == "-":
-        sub_a = build_ast(ctx, functor, expr)
-        sub_b = build_ast(ctx, functor, expr)
+        sub_a = build_ast(ctx, expr, data, depth)
+        sub_b = build_ast(ctx, expr, data, depth)
         return ("-", sub_a, sub_b)
     elif op == "*":
-        mul_a = build_ast(ctx, functor, expr)
-        mul_b = build_ast(ctx, functor, expr)
+        mul_a = build_ast(ctx, expr, data, depth)
+        mul_b = build_ast(ctx, expr, data, depth)
         return ("*", mul_a, mul_b)
     elif op == "//":
-        idiv_a = build_ast(ctx, functor, expr)
-        idiv_b = build_ast(ctx, functor, expr)
+        idiv_a = build_ast(ctx, expr, data, depth)
+        idiv_b = build_ast(ctx, expr, data, depth)
         return ("//", idiv_a, idiv_b)
     elif op == "ref":
-        ref_a = build_ast(ctx, functor, expr)
-        ref_b = build_ast(ctx, functor, expr)
+        ref_a = build_ast(ctx, expr, data, depth)
+        ref_b = build_ast(ctx, expr, data, depth)
         if type(ref_b) is list:
             ref_b = tuple(ref_b)
         return ("ref", ref_a, ref_b)
     elif op == "d":
-        data = []
-        for r in functor.data:
-            name = "data{}".format(id(r))
-            ctx["data"][name] = ("float", r)
-            data.append(name)
-        name = "data{}".format(id(functor.data))
-        ctx["data"][name] = ("float *", data)
+        name = "data{}".format(id(data))
+        ctx["data"][name] = ("float", data)
         return name
     elif re.match("-?[0-9]+", op):
         return ("term",op)
     elif re.match("d[0-9]+", op):
-        return ("term", str(functor.data[int(op[1:])]))
+        i = int(op[1:])
+        return ("term", data[i])
     elif re.match("i[0-9]+", op):
-        return ("idx", op[1:], idx_level)
+        return ("idx", op[1:], depth)
     else:
         raise NotImplementedError("Invalid token {}".format(op))
 
@@ -158,12 +179,9 @@ class Shape():
     def __getitem__(self, idx):
         return [x[-1] for x in self.shape][idx]
 
-    def composite(self, shape):
-        shape = self.ensure_list(shape)
-        ret = []
+    def split(self, slice):
         for i in range(len(self.shape)):
-            ret.append(sorted(list(set(self.shape[i] + shape[i]))))
-        return Shape(ret)
+            pass
 
     def ensure_list(self, shape):
         if type(shape) is Shape:
@@ -178,7 +196,7 @@ class Shape():
 
 class Functor():
     acc = 0
-    def __init__(self, shape, dtype=None, dexpr=None, iexpr=None, data=None, subs=None, desc=None):
+    def __init__(self, shape, dtype=None, dexpr=None, iexpr=None, data=None, subs=[], desc=None):
         # external perspective
         self.id = Functor.acc
         Functor.acc += 1
@@ -272,14 +290,14 @@ class Functor():
             else:
                 for i,slice in enumerate(self.shape.slices()):
                     functor = self.subs[i]
-                    base = [x[0] for x in slice]
+                    offset = [x[0] for x in slice]
                     for idx in itertools.product(*[range(n) for n in functor.shape]):
-                        pidx = tuple([sum(x) for x in zip(base, self.eval_index(idx))])
+                        pidx = tuple([sum(x) for x in zip(offset, self.eval_index(idx))])
                         # print("functor", functor)
                         # print("eval", functor.eval())
                         # print("slice", slice)
                         # print("shape", functor.shape)
-                        # print("idx",idx,"base",base)
+                        # print("idx",idx,"offset",offset)
                         # print("pidx",pidx)
                         # print("data",data.shape)
                         data[pidx] = functor.eval()[idx]
@@ -289,22 +307,56 @@ class Functor():
             self.eval_cached = data
         return self.eval_cached
 
-    def build_idx(self, ctx, idx_level=0):
-        if self.iexpr is None:
-            return idx_level
-        else:
-            idx_level += 1
-            # for iexpr in self.iexpr:
-                # ctx["defines"].append()
-            return idx_level
     def build_cfg(self, ctx):
         shape  = list([eval_expr(self, s) for s in self.shape])
         if ctx is None:
             ctx = new_ctx()
-        ctx["symbols"][self.name] = (self.type, shape)
-        ctx["cfg"].append(("for", shape))
-        ast = build_ast(ctx, self, Expr(self.dexpr), self.build_idx(ctx))
-        ctx["cfg"].append(("=", self, ast))
-        ctx["cfg"].append(("endfor",))
+        ctx["symbols"][self.name] = (self.dtype, shape)
+
+        for slice, spec, offset in self.build_blocks():
+            ctx["stmt"].append(("for", [x[1] for x in slice]))
+            stmt = []
+            mapping = []
+            symbol, depth = build_stmt({"symbols":ctx["symbols"], "data":ctx["data"], "stmt": stmt, "map":mapping}, self, spec, offset)
+            for m in mapping:
+                ctx["stmt"].append(("def", m[0], m[1]))
+            ctx["stmt"].append(("=", self, symbol, depth))
+            for m in mapping[::-1]:
+                ctx["stmt"].append(("undef", m[0]))
+            ctx["stmt"].append(("endfor",))
 
         return ctx
+
+    def build_blocks(self, path=tuple()):
+        blocks = []
+
+        if self.dexpr:
+            slice = self.shape.slices()[0]
+            offset = [x[0] for x in slice]
+            for e in self.dexpr:
+                if re.match(r"f[0-9]+", e):
+                    i = int(e[1:])
+                    sf = self.subs[i]
+                    spath = tuple((*path, i))
+                    for sub_slice, sub_spec, sub_offset in sf.build_blocks(spath):
+                        soffset = dict(sub_offset)
+                        soffset[path] = offset
+                        blocks.append((sub_slice, sub_spec, soffset))
+        else:
+            for i,slice in enumerate(self.shape.slices()):
+                functor = self.subs[i]
+                spath = tuple((*path, i))
+                offset = [x[0] for x in slice]
+
+                for sub_slice, sub_spec, sub_offset in self.subs[i].build_blocks(spath):
+                    sspec = dict(sub_spec)
+                    sspec[path] = i
+                    soffset = dict(sub_offset)
+                    soffset[path] = offset
+                    blocks.append((sub_slice, sspec, soffset))
+
+        if not blocks:
+            slice = self.shape.slices()[0]
+            blocks.append((slice,{},{}))
+
+        return blocks
