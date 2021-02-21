@@ -1,5 +1,6 @@
 # Notice
-* Runtime axis operations are not supported, such as:
+* Still in pre-alpha development
+* Runtime axis operations are not supported by design, such as:
     * Dynamic shape
     * Dynamic transpose
 
@@ -15,6 +16,14 @@
     * stack
     * concatenate
     * expand_dims
+
+# Todo
+* Elementwise operations
+* slicing
+* slice assignment
+* manipulation
+    * reshape
+    * repeat
 
 # Example
 ```

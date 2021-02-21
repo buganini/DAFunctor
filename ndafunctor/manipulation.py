@@ -16,7 +16,7 @@ def stack(array, axis=0):
     iexpr = [["i{}".format(i) for i in range(len(array[0].shape))]]
     iexpr.insert(axis, [0])
     shape = list(array[0].shape)
-    shape.insert(axis, list(range(1,len(array)+1)))
+    shape.insert(axis, list(range(0,len(array)+1)))
     return Functor(
         shape,
         iexpr = iexpr,
@@ -27,7 +27,7 @@ def stack(array, axis=0):
 def concatenate(array, axis=0):
     iexpr = [["i{}".format(i) for i in range(len(array[0].shape))]]
     shape = list(array[0].shape)
-    shape[axis] = [shape[axis]*(i+1) for i in range(len(array))]
+    shape[axis] = [shape[axis]*(i) for i in range(len(array)+1)]
     return Functor(
         shape,
         iexpr = iexpr,

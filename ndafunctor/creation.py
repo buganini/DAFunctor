@@ -48,7 +48,7 @@ def arange(*args):
     )
 
 def raw_meshgrid(*args):
-    shape = [range(1,len(args)+1)]
+    shape = [range(0,len(args)+1)]
     for i in range(len(args)):
         shape.append(len(args[i]))
     # data[i0][i[i0+1]]

@@ -163,8 +163,8 @@ class Shape():
         ret = []
         for axis_slices in self.shape:
             dslices = []
-            b = 0
-            for e in axis_slices:
+            b = axis_slices[0]
+            for e in axis_slices[1:]:
                 dslices.append((b,e-b))
                 b = e
             ret.append(dslices)
@@ -180,7 +180,7 @@ class Shape():
         return len(self.shape)
 
     def __getitem__(self, idx):
-        return [x[-1] for x in self.shape][idx]
+        return [x[-1]-x[0] for x in self.shape][idx]
 
     def size(self):
         size = 1
@@ -194,7 +194,7 @@ class Shape():
         ret = []
         for s in shape:
             if type(s) is int:
-                ret.append([s])
+                ret.append([0,s])
             else:
                 ret.append(list(s))
         return ret
