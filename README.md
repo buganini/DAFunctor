@@ -19,8 +19,10 @@
 
 # Todo
 * Elementwise operations
-* slicing
-* slice assignment
+* slicing (step=1)
+* slicing (step>1)
+* slice assignment (step=1)
+* slice assignment (step>1)
 * manipulation
     * reshape
     * repeat
