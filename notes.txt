@@ -1,0 +1,25 @@
+Consider an operation as
+    dst = Func(src)
+    or
+    dst[Didx] = Func(Sidx)
+
+Trial 1:
+    for Didx in idx_in(dst):
+        Sidx = I(Didx)
+        dst[Didx] = F(Sidx)
+
+    Pros:
+        * intuitive for simple constructive functions
+    Cons:
+        * needs branch in loop for data combining functions like stack()
+
+Trial 2:
+    blocks = src splitted by data branches
+    for block in blocks:
+        for Sidx in idx_in(block):
+            Didx = J(Sidx)
+            dst[Didx] = F(Sidx)
+    Pros:
+        * no branch in loop
+    Cons:
+        * unable to construct 1-Sidx to n-Didx functions like repeat()
