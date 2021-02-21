@@ -39,7 +39,7 @@ class Expr():
             raise IndexError("Index out of ", self.expr)
 
     def print(self):
-        print(self.expr[:self.pos], "<cursor>", self.expr[self.pos:])
+        print(self.expr[:self.pos], "@", self.expr[self.pos:])
 
 def eval_expr(functor, expr, index=None):
     if type(expr) is Functor:
@@ -84,6 +84,7 @@ def eval_expr(functor, expr, index=None):
         # print(index)
         ret = index[int(op[1:])]
     else:
+        expr.print()
         raise NotImplementedError("Invalid token {}".format(op))
 
     if type(ret) is Functor:
@@ -298,17 +299,18 @@ class Functor():
                     offset = [x[0] for x in slice]
                     for idx in itertools.product(*[range(n) for n in functor.shape]):
                         pidx = tuple([sum(x) for x in zip(offset, self.eval_index(idx))])
-                        # print("functor", functor)
-                        # print("eval", functor.eval())
-                        # print("slice", slice)
-                        # print("shape", functor.shape)
-                        # print("idx",idx,"offset",offset)
-                        # print("pidx",pidx)
-                        # print("data",data.shape)
-                        data[pidx] = functor.eval()[idx]
-            # print("eval", self.desc)
-            # print(data)
-            # print("============")
+                        v = functor.eval()
+                        try:
+                            data[pidx] = v[idx]
+                        except:
+                            print("===== DEBUG ======")
+                            print("Sub-Functor", functor)
+                            print("iexpr", self.iexpr)
+                            print("idx",idx,"offset",offset)
+                            print("pidx",pidx)
+                            print("data", data.shape)
+                            print("==================")
+                            raise
             self.eval_cached = data
         return self.eval_cached
 
