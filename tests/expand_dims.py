@@ -16,8 +16,6 @@ r = nf.expand_dims(nf.arange(1,6), axis=1)
 print("ndafunctor", r.eval())
 r.output("float", "output")
 
-print(r.build_blocks())
-
 print("===== CFG =====")
 cfg = nf.build_cfg([r])
 pp.pprint(cfg)

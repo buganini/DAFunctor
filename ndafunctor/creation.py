@@ -1,6 +1,5 @@
 from .functor import Functor, Data
 from .manipulation import *
-from .ast import join as ast_join
 
 def _shape(data):
     try:
@@ -37,35 +36,39 @@ def array(data):
     shape = _shape(data)
     if shape is None:
         raise ValueError("Heterogeneous array is not supported")
-    dexpr = ast_join("+", [
-        ast_join("*", ["i{}".format(i)]+[shape[j] for j in range(i+1, len(shape))])
+    dexpr = ["+", [
+        ["*",
+            [f"i{i}"]
+            +
+            [shape[j] for j in range(i+1, len(shape))]
+        ]
         for i in range(len(shape))
-    ])
+    ]]
     return Functor(
         shape,
-        dexpr = ["ref", "d"] + dexpr,
+        dexpr = ["ref", ["d", dexpr]],
         data = Data(_flatten(data), "array"),
-        desc = "array({})".format(str(shape))
+        desc = f"array({str(shape)})"
     )
 
 def zeros(shape):
     return Functor(
         shape,
-        dexpr = [0],
+        dexpr = 0,
         desc = "zeros"
     )
 
 def ones(shape):
     return Functor(
         shape,
-        dexpr = [1],
+        dexpr = 1,
         desc = "ones"
     )
 
 def full(shape, fill_value):
     return Functor(
         shape,
-        dexpr = [fill_value],
+        dexpr = fill_value,
         desc = "full"
     )
 
@@ -89,7 +92,7 @@ def arange(*args):
     shape = [(end - start) // step]
     return Functor(
         shape,
-        dexpr = ["+","d0","*","i0","d2"], # start + i * step
+        dexpr = ["+",["d0",["*",["i0","d2"]]]], # start + i * step
         data = data,
         desc = "arange"
     )
@@ -103,13 +106,13 @@ def raw_meshgrid(*args):
     for i in range(len(args)):
         subs.append(Functor(
             shape[1:],
-            dexpr = ["ref","d","i{}".format(i)], # data[i{i0+1}]]
+            dexpr = ["ref",["d",f"i{i}"]], # data[i{i0+1}]]
             data = Data(args[i], "meshgrid"),
-            desc = "raw_meshgrid[{}]".format(i)
+            desc = f"raw_meshgrid[{i}]"
         ))
-    iexpr = [[0]]
+    iexpr = [0]
     for i in range(len(shape)-1):
-        iexpr.append(["i{}".format(i)])
+        iexpr.append(f"i{i}")
     return Functor(
         shape,
         iexpr = iexpr,

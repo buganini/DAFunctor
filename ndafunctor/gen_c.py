@@ -4,9 +4,8 @@ from .functor import *
 intent_spaces = 4
 
 def gen_c_expr(expr, output, indent=0):
-    if type(expr) is str:
-        output.write(expr)
-        return
+    if type(expr) in (str, int, float):
+        return str(expr)
 
     if expr[0] == "for":
         shape = expr[1]
@@ -23,7 +22,7 @@ def gen_c_expr(expr, output, indent=0):
     elif expr[0] == "=":
         if type(expr[1]) is Functor:
             tensor = expr[1]
-            symbols = expr[2]
+            value_expr = expr[2]
             depth = expr[3]
             idx = []
             for i in range(len(tensor.shape)):
@@ -37,51 +36,57 @@ def gen_c_expr(expr, output, indent=0):
             idx = " + ".join(idx)
             output.write(" "*(indent+1)*intent_spaces)
             output.write("{name}[{idx}] = ".format(name=tensor.name, idx=idx))
-            gen_c_expr(symbols, output, indent=indent+1)
+            output.write(gen_c_expr(value_expr, output, indent=indent+1))
             output.write(";\n")
 
     elif expr[0] == "idx":
         if expr[2]==0:
-            output.write("i{}".format(expr[1]))
+            return f"i{expr[1]}"
         else:
-            output.write("I{}_{}".format(expr[1], expr[2]))
+            return f"I{expr[1]}_{expr[2]}"
 
     elif expr[0] == "def":
         output.write("#define ")
-        gen_c_expr(expr[1], output, indent=0)
+        output.write(gen_c_expr(expr[1], output, indent=0))
         output.write(" ")
         output.write("(")
-        gen_c_expr(expr[2], output, indent=0)
+        output.write(gen_c_expr(expr[2], output, indent=0))
         output.write(")")
         output.write("\n")
 
     elif expr[0] == "undef":
         output.write("#undef ")
-        gen_c_expr(expr[1], output, indent=0)
+        output.write(gen_c_expr(expr[1], output, indent=0))
         output.write("\n")
 
     elif expr[0] == "ref":
-        gen_c_expr(expr[1], output, indent=0)
-        output.write("[")
-        gen_c_expr(expr[2], output, indent=0)
-        output.write("]")
+        a = gen_c_expr(expr[1], output, indent=0)
+        b = gen_c_expr(expr[2], output, indent=0)
+        return f"{a}[{b}]"
 
     elif expr[0] == "+":
-        output.write("(")
-        gen_c_expr(expr[1], output, indent=0)
-        output.write("+")
-        gen_c_expr(expr[2], output, indent=0)
-        output.write(")")
+        args = [gen_c_expr(e, output, indent=0) for e in expr[1]]
+        return "".join(["(", "+".join(args), ")"])
+
+    elif expr[0] == "-":
+        args = [gen_c_expr(e, output, indent=0) for e in expr[1]]
+        return "".join(["(", "-".join(args), ")"])
 
     elif expr[0] == "*":
-        output.write("(")
-        gen_c_expr(expr[1], output, indent=0)
-        output.write("*")
-        gen_c_expr(expr[2], output, indent=0)
-        output.write(")")
+        args = [gen_c_expr(e, output, indent=0) for e in expr[1]]
+        return "".join(["(", "*".join(args), ")"])
+
+    elif expr[0] == "//":
+        # XXX float args
+        args = [gen_c_expr(e, output, indent=0) for e in expr[1]]
+        return "".join(["(", "/".join(args), ")"])
+
+    elif expr[0] == "%":
+        args = [gen_c_expr(e, output, indent=0) for e in expr[1]]
+        return "".join(["(", "%".join(args), ")"])
 
     elif expr[0] == "term":
-        output.write(str(expr[1]))
+        return str(expr[1])
 
     else:
         raise NotImplementedError("Unknown expr op {}".format(expr[0]))
