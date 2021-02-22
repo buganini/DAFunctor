@@ -108,16 +108,11 @@ def gen_c(ctx, output, indent=0):
     for sym_name in ctx["data"]:
         dtype, data = ctx["data"][sym_name]
         array = False
-        if type(data) is list:
-            array = True
         output.write(" "*indent*intent_spaces)
         output.write("{dtype} {name}".format(dtype=dtype, name=sym_name));
-        if array:
-            output.write("[] = {")
-            output.write(",".join([str(x) for x in data]))
-            output.write("};\n");
-        else:
-            output.write("= {};\n".format(data))
+        output.write("[] = {")
+        output.write(",".join([str(x) for x in data]))
+        output.write("};\n");
     if ctx["data"]:
         output.write("\n");
 

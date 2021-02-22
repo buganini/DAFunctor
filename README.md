@@ -47,8 +47,8 @@ ndafunctor [[[1. 2.]
   [4. 4.]
   [5. 5.]]]
 ===== CFG =====
-{'data': OrderedDict([('data139821754319552', ('float', [1, 2])),
-                      ('data139821748908288', ('float', [3, 4, 5]))]),
+{'data': OrderedDict([('d_meshgrid_0', ('float', [1, 2])),
+                      ('d_meshgrid_1', ('float', [3, 4, 5]))]),
  'stmt': [('for', [2, 3]),
           ('def', ('idx', 0, 1), ('term', '0')),
           ('def', ('idx', 1, 1), ('idx', 0, 0)),
@@ -57,8 +57,8 @@ ndafunctor [[[1. 2.]
           ('def', ('idx', 1, 2), ('idx', 2, 1)),
           ('def', ('idx', 2, 2), ('idx', 1, 1)),
           ('=',
-           Functor(id=3, desc=transposed_raw_meshgrid, shape=[[2], [3], [2]], iexpr=[['i0'], ['i2'], ['i1']], subs=1),
-           ('ref', 'data139821754319552', ('idx', 0, 0)),
+           Functor(id=3, desc=transposed_raw_meshgrid, shape=[[0, 2], [0, 3], [0, 2]], iexpr=[['i0'], ['i2'], ['i1']], subs=1),
+           ('ref', 'd_meshgrid_0', ('idx', 0, 0)),
            2),
           ('undef', ('idx', 2, 2)),
           ('undef', ('idx', 1, 2)),
@@ -75,8 +75,8 @@ ndafunctor [[[1. 2.]
           ('def', ('idx', 1, 2), ('idx', 2, 1)),
           ('def', ('idx', 2, 2), ('idx', 1, 1)),
           ('=',
-           Functor(id=3, desc=transposed_raw_meshgrid, shape=[[2], [3], [2]], iexpr=[['i0'], ['i2'], ['i1']], subs=1),
-           ('ref', 'data139821748908288', ('idx', 1, 0)),
+           Functor(id=3, desc=transposed_raw_meshgrid, shape=[[0, 2], [0, 3], [0, 2]], iexpr=[['i0'], ['i2'], ['i1']], subs=1),
+           ('ref', 'd_meshgrid_1', ('idx', 1, 0)),
            2),
           ('undef', ('idx', 2, 2)),
           ('undef', ('idx', 1, 2)),
@@ -85,7 +85,7 @@ ndafunctor [[[1. 2.]
           ('undef', ('idx', 1, 1)),
           ('undef', ('idx', 0, 1)),
           ('endfor',)],
- 'symbols': OrderedDict([('output', ('float', [[2], [3], [2]]))])}
+ 'symbols': OrderedDict([('output', ('float', [[0, 2], [0, 3], [0, 2]]))])}
 ===== C =====
 Generated tests/../test-build/meshgrid_data.py.c
 #include <stdio.h>
@@ -94,8 +94,8 @@ Generated tests/../test-build/meshgrid_data.py.c
 float output[12];
 
 // Data
-float data139821754319552[] = {1,2};
-float data139821748908288[] = {3,4,5};
+float d_meshgrid_0[] = {1,2};
+float d_meshgrid_1[] = {3,4,5};
 
 int main(int argc, char *argv[]){
     for(int i0=0;i0<2;i0++)
@@ -107,7 +107,7 @@ int main(int argc, char *argv[]){
 #define I0_2 (I0_1)
 #define I1_2 (I2_1)
 #define I2_2 (I1_1)
-        output[I0_2*3*2 + I1_2*2 + I2_2] = data139821754319552[i0];
+        output[I0_2*3*2 + I1_2*2 + I2_2] = d_meshgrid_0[i0];
 #undef I2_2
 #undef I1_2
 #undef I0_2
@@ -124,7 +124,7 @@ int main(int argc, char *argv[]){
 #define I0_2 (I0_1)
 #define I1_2 (I2_1)
 #define I2_2 (I1_1)
-        output[I0_2*3*2 + I1_2*2 + I2_2] = data139821748908288[i1];
+        output[I0_2*3*2 + I1_2*2 + I2_2] = d_meshgrid_1[i1];
 #undef I2_2
 #undef I1_2
 #undef I0_2

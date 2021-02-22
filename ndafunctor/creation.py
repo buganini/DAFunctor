@@ -1,4 +1,4 @@
-from .functor import Functor
+from .functor import Functor, Data
 from .manipulation import *
 from .ast import join as ast_join
 
@@ -44,7 +44,7 @@ def array(data):
     return Functor(
         shape,
         dexpr = ["ref", "d"] + dexpr,
-        data = _flatten(data),
+        data = Data(_flatten(data), "array"),
         desc = "array({})".format(str(shape))
     )
 
@@ -104,7 +104,7 @@ def raw_meshgrid(*args):
         subs.append(Functor(
             shape[1:],
             dexpr = ["ref","d","i{}".format(i)], # data[i{i0+1}]]
-            data = args[i],
+            data = Data(args[i], "meshgrid"),
             desc = "raw_meshgrid[{}]".format(i)
         ))
     iexpr = [[0]]

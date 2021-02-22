@@ -142,7 +142,7 @@ def build_ast(ctx, expr, data, depth):
             ref_b = tuple(ref_b)
         return ("ref", ref_a, ref_b)
     elif op == "d":
-        name = "data{}".format(id(data))
+        name = data.get_name()
         ctx["data"][name] = ("float", data)
         return name
     elif re.match("-?[0-9]+", op):
@@ -200,6 +200,20 @@ class Shape():
                 ret.append(list(s))
         return ret
 
+class Data(list):
+    acc = 0
+    def __init__(self, a, name=None):
+        super().__init__(a)
+        self.id = Data.acc
+        Data.acc += 1
+        self.name = name
+
+    def get_name(self):
+        if self.name:
+            return "d_{}_{}".format(self.name, self.id)
+        else:
+            return "d_{}".format(self.id)
+
 class Functor():
     acc = 0
     def __init__(self, shape, dtype=None, dexpr=None, iexpr=None, data=None, subs=[], desc=None):
@@ -213,7 +227,13 @@ class Functor():
         # internal perspective
         self.dexpr = dexpr # data expression, evaluate from index/data to value
         self.iexpr = iexpr # index expression, evaluate from sub-functor index to index for this functor
-        self.data = data # static data
+        if data: # static data
+            if type(data) is Data:
+                self.data = data
+            else:
+                self.data = Data(data)
+        else:
+            self.data = None
         self.subs = subs # sub functors
 
         # runtime
