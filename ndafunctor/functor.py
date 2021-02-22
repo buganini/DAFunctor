@@ -69,40 +69,23 @@ def eval_expr(functor, expr, index=None):
     if type(op) in (int, float):
         ret = op
     elif op == "+":
-        a = [eval_expr(functor, e, index) for e in expr if not e is None]
-        a = [x for x in a if not x is None]
-        if a:
-            ret = reduce(lambda x,y:x+y, a)
-        else:
-            ret = None
+        a = [eval_expr(functor, e, index) for e in expr]
+        ret = reduce(lambda x,y:x+y, a)
     elif op == "-":
-        a = [eval_expr(functor, e, index) for e in expr if not e is None]
-        a = [x for x in a if not x is None]
-        if a:
-            ret = reduce(lambda x,y:x-y, a)
-        else:
-            ret = None
+        a = [eval_expr(functor, e, index) for e in expr]
+        ret = reduce(lambda x,y:x-y, a)
     elif op == "*":
-        a = [eval_expr(functor, e, index) for e in expr if not e is None]
-        a = [x for x in a if not x is None]
-        if a:
-            ret = reduce(lambda x,y:x*y, a)
-        else:
-            ret = None
+        a = [eval_expr(functor, e, index) for e in expr]
+        ret = reduce(lambda x,y:x*y, a)
     elif op == "//":
-        a = [eval_expr(functor, e, index) for e in expr if not e is None]
-        a = [x for x in a if not x is None]
-        if a:
-            ret = reduce(lambda x,y:x//y, a)
-        else:
-            ret = None
+        a = [eval_expr(functor, e, index) for e in expr]
+        ret = reduce(lambda x,y:x//y, a)
+    elif op == "/":
+        a = [eval_expr(functor, e, index) for e in expr]
+        ret = reduce(lambda x,y:x/y, a)
     elif op == "%":
-        a = [eval_expr(functor, e, index) for e in expr if not e is None]
-        a = [x for x in a if not x is None]
-        if a:
-            ret = reduce(lambda x,y:x%y, a)
-        else:
-            ret = None
+        a = [eval_expr(functor, e, index) for e in expr]
+        ret = reduce(lambda x,y:x%y, a)
     elif op == "ref":
         ref_a = eval_expr(functor, expr[0], index)
         ref_b = eval_expr(functor, expr[1], index)
@@ -155,33 +138,12 @@ def build_stmt(ctx, functor, spec, offset, path=tuple(), subs=[], data=[]):
         return sym, sdepth+1
 
 def build_ast(ctx, expr, data, depth):
-    def S(op, args):
-        args = [x for x in args if not x is None]
-        if args:
-            if len(args) > 1:
-                return [op, args]
-            else:
-                return args[0]
-        else:
-            return None
     op = expr.op
     if type(op) in (int, float):
         return op
-    elif op == "+":
+    elif op in ("+","-","*","//","/","%"):
         args = [build_ast(ctx, e, data, depth) for e in expr]
-        return S("+", args)
-    elif op == "-":
-        args = [build_ast(ctx, e, data, depth) for e in expr]
-        return S("-", args)
-    elif op == "*":
-        args = [build_ast(ctx, e, data, depth) for e in expr]
-        return S("*", args)
-    elif op == "//":
-        args = [build_ast(ctx, e, data, depth) for e in expr]
-        return S("//", args)
-    elif op == "%":
-        args = [build_ast(ctx, e, data, depth) for e in expr]
-        return S("%", args)
+        return [op, args]
     elif op == "ref":
         ref_a = build_ast(ctx, expr[0], data, depth)
         ref_b = build_ast(ctx, expr[1], data, depth)

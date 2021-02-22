@@ -1,4 +1,5 @@
 from .functor import Functor, Shape
+from .ast import strip as ast_strip
 
 def transpose(functor, dims):
     iexpr = [f"i{axis}" for axis in dims]
@@ -20,7 +21,7 @@ def reshape(a, shape):
     iexpr = []
     for i in range(len(shape)):
         iexpr.append(
-            [
+            ast_strip([
                 "//",
                 [
                     ["%",
@@ -34,7 +35,7 @@ def reshape(a, shape):
                     ],
                     ["*", shape[i+1:]]
                 ]
-            ]
+            ])
         )
     return Functor(
         shape,
