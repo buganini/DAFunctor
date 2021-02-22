@@ -15,7 +15,6 @@
 * manipulation
     * transpose
     * stack
-    * concatenate
     * expand_dims
 
 # Todo
@@ -26,6 +25,7 @@
 * slice assignment (step>1)
 * manipulation
     * reshape
+    * concatenate
     * repeat
 
 # Example
