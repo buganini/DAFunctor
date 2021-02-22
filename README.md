@@ -16,6 +16,7 @@
     * transpose
     * stack
     * expand_dims
+    * repeat
 
 # Todo
 * Elementwise operations
@@ -26,7 +27,6 @@
 * manipulation
     * reshape
     * concatenate
-    * repeat
 
 # Example
 ```

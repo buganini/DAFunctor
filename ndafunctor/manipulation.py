@@ -1,4 +1,4 @@
-from .functor import Functor
+from .functor import Functor, Shape
 
 def transpose(functor, dims):
     iexpr = [f"i{axis}" for axis in dims]
@@ -8,6 +8,39 @@ def transpose(functor, dims):
         iexpr = iexpr,
         desc = f"transposed_{functor.desc}",
         subs = [functor]
+    )
+
+def reshape(a, shape):
+    offset = ["+",[
+        ["*",
+            [f"i{i}"] + [a.shape[j] for j in range(i+1,len(a.shape))]
+        ]
+        for i in range(len(a.shape))
+    ]]
+    iexpr = []
+    for i in range(len(shape)):
+        iexpr.append(
+            [
+                "//",
+                [
+                    ["%",
+                        [offset]+[
+                            [
+                                "*",
+                                shape[j:]
+                            ]
+                            for j in range(i+1)
+                        ]
+                    ],
+                    ["*", shape[i+1:]]
+                ]
+            ]
+        )
+    return Functor(
+        shape,
+        iexpr = iexpr,
+        desc = f"reshape({shape})_{a.desc}",
+        subs = [a]
     )
 
 def stack(array, axis=0):

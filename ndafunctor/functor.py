@@ -38,6 +38,12 @@ class Expr():
     def __getitem__(self, idx):
         return Expr(self.args[idx], self.functor, self.i)
 
+    def __str__(self):
+        return f"[{self.op}, [{self.args}]]"
+
+    def __repr__(self):
+        return self.__str__()
+
     def search(self, p):
         todo = [self]
         ret = set()
@@ -64,30 +70,35 @@ def eval_expr(functor, expr, index=None):
         ret = op
     elif op == "+":
         a = [eval_expr(functor, e, index) for e in expr if not e is None]
+        a = [x for x in a if not x is None]
         if a:
             ret = reduce(lambda x,y:x+y, a)
         else:
             ret = None
     elif op == "-":
         a = [eval_expr(functor, e, index) for e in expr if not e is None]
+        a = [x for x in a if not x is None]
         if a:
             ret = reduce(lambda x,y:x-y, a)
         else:
             ret = None
     elif op == "*":
         a = [eval_expr(functor, e, index) for e in expr if not e is None]
+        a = [x for x in a if not x is None]
         if a:
             ret = reduce(lambda x,y:x*y, a)
         else:
             ret = None
     elif op == "//":
         a = [eval_expr(functor, e, index) for e in expr if not e is None]
+        a = [x for x in a if not x is None]
         if a:
             ret = reduce(lambda x,y:x//y, a)
         else:
             ret = None
     elif op == "%":
         a = [eval_expr(functor, e, index) for e in expr if not e is None]
+        a = [x for x in a if not x is None]
         if a:
             ret = reduce(lambda x,y:x%y, a)
         else:
@@ -144,24 +155,33 @@ def build_stmt(ctx, functor, spec, offset, path=tuple(), subs=[], data=[]):
         return sym, sdepth+1
 
 def build_ast(ctx, expr, data, depth):
+    def S(op, args):
+        args = [x for x in args if not x is None]
+        if args:
+            if len(args) > 1:
+                return [op, args]
+            else:
+                return args[0]
+        else:
+            return None
     op = expr.op
     if type(op) in (int, float):
         return op
     elif op == "+":
         args = [build_ast(ctx, e, data, depth) for e in expr]
-        return ["+", args]
+        return S("+", args)
     elif op == "-":
         args = [build_ast(ctx, e, data, depth) for e in expr]
-        return ["-", args]
+        return S("-", args)
     elif op == "*":
         args = [build_ast(ctx, e, data, depth) for e in expr]
-        return ["*", args]
+        return S("*", args)
     elif op == "//":
         args = [build_ast(ctx, e, data, depth) for e in expr]
-        return ["//", args]
+        return S("//", args)
     elif op == "%":
         args = [build_ast(ctx, e, data, depth) for e in expr]
-        return ["%", args]
+        return S("%", args)
     elif op == "ref":
         ref_a = build_ast(ctx, expr[0], data, depth)
         ref_b = build_ast(ctx, expr[1], data, depth)
@@ -365,7 +385,9 @@ class Functor():
                         except:
                             print("===== DEBUG ======")
                             print("Sub-Functor", functor)
-                            print("iexpr", self.iexpr)
+                            print("iexpr")
+                            for e in self.iexpr:
+                                print(e)
                             print("idx",idx,"offset",offset)
                             print("pidx",pidx)
                             print("data", data.shape)
