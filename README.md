@@ -6,6 +6,7 @@
 
 # Supported operations
 * creation
+    * array
     * zeros
     * ones
     * full

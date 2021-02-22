@@ -1,5 +1,52 @@
 from .functor import Functor
 from .manipulation import *
+from .ast import join as ast_join
+
+def _shape(data):
+    try:
+        _ = iter(data)
+    except TypeError:
+        return tuple()
+    else:
+        homo = True
+        shape = [_shape(e) for e in data]
+        for s in shape[1:]:
+            if s is None:
+                homo = False
+            if s != shape[0]:
+                homo = False
+        if homo:
+            return tuple([len(shape), *shape[0]])
+        else:
+            return None
+
+def _flatten(data):
+    ret = []
+    todo = data
+    while todo:
+        e = todo.pop(0)
+        try:
+            _ = iter(e)
+        except TypeError:
+            ret.append(e)
+        else:
+            todo.extend(e)
+    return ret
+
+def array(data):
+    shape = _shape(data)
+    if shape is None:
+        raise ValueError("Heterogeneous array is not supported")
+    dexpr = ast_join("+", [
+        ast_join("*", ["i{}".format(i)]+[shape[j] for j in range(i+1, len(shape))])
+        for i in range(len(shape))
+    ])
+    return Functor(
+        shape,
+        dexpr = ["ref", "d"] + dexpr,
+        data = _flatten(data),
+        desc = "array({})".format(str(shape))
+    )
 
 def zeros(shape):
     return Functor(

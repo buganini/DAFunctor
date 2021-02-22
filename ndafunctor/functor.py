@@ -265,6 +265,10 @@ class Functor():
         print(" "*(indent+1)*indent__num, end="")
         print("iexpr={}".format(self.iexpr))
 
+        if self.data:
+            print(" "*(indent+1)*indent__num, end="")
+            print("data={}".format(self.data))
+
         for i,s in enumerate(self.subs or []):
             s.print(indent+1, suffix="[{}]".format(i))
 
