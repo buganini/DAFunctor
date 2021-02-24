@@ -54,11 +54,13 @@ def gen_c_expr(expr, output, indent=0):
         output.write(gen_c_expr(expr[2], output, indent=0))
         output.write(")")
         output.write("\n")
+        return indent
 
     elif expr[0] == "undef":
         output.write("#undef ")
         output.write(gen_c_expr(expr[1], output, indent=0))
         output.write("\n")
+        return indent
 
     elif expr[0] == "ref":
         a = gen_c_expr(expr[1], output, indent=0)
