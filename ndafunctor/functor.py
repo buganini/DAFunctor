@@ -414,6 +414,7 @@ class Functor():
     def get_name(self):
         if self.name is None:
             self.name = f"tensor{self.id}"
+        return self.name
 
     def get_type(self):
         if not self.dtype is None:
@@ -427,7 +428,7 @@ class Functor():
         import ctypes
         import numpy
 
-        fname = f"gen_{self.name}"
+        fname = f"gen_{self.get_name()}"
 
         jitdir = os.path.realpath("__jit__")
         os.makedirs(jitdir, exist_ok=True)
@@ -452,4 +453,5 @@ class Functor():
             pointer = ret.ctypes.data_as(ctypes.c_void_p)
             f(pointer, *args)
             return ret
+        func.source = cfile
         return func
