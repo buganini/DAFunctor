@@ -30,79 +30,61 @@
 
 # Example
 ```
-> python3 tests/meshgrid_data.py
+>>> import ndafunctor as nf
+>>> s = nf.meshgrid([1,2],[3,4,5])
+>>> s.eval()
+array([[[1., 2.],
+        [1., 2.],
+        [1., 2.]],
 
-numpy [[[1 2]
-  [1 2]
-  [1 2]]
+       [[3., 3.],
+        [4., 4.],
+        [5., 5.]]])
+>>> f = s.jit()
+>>> f()
+array([[[1., 2.],
+        [1., 2.],
+        [1., 2.]],
 
- [[3 3]
-  [4 4]
-  [5 5]]]
-ndafunctor [[[1. 2.]
-  [1. 2.]
-  [1. 2.]]
-
- [[3. 3.]
-  [4. 4.]
-  [5. 5.]]]
-===== CFG =====
-{'data': OrderedDict([('d_meshgrid_0', ('float', [1, 2])),
-                      ('d_meshgrid_1', ('float', [3, 4, 5]))]),
- 'stmt': [['for', [2, 3]],
-          ['def', ['idx', 0, 1], 0],
-          ['def', ['idx', 1, 1], ['idx', 0, 0]],
-          ['def', ['idx', 2, 1], ['idx', 1, 0]],
-          ['def', ['idx', 0, 2], ['idx', 0, 1]],
-          ['def', ['idx', 1, 2], ['idx', 2, 1]],
-          ['def', ['idx', 2, 2], ['idx', 1, 1]],
-          ['=',
-           Functor(id=3, desc=transposed_raw_meshgrid, shape=[[0, 2], [0, 3], [0, 2]], iexpr=['i0', 'i2', 'i1'], subs=1),
-           ['ref', 'd_meshgrid_0', ('idx', 0, 0)],
-           2],
-          ['undef', ['idx', 2, 2]],
-          ['undef', ['idx', 1, 2]],
-          ['undef', ['idx', 0, 2]],
-          ['undef', ['idx', 2, 1]],
-          ['undef', ['idx', 1, 1]],
-          ['undef', ['idx', 0, 1]],
-          ['endfor'],
-          ['for', [2, 3]],
-          ['def', ['idx', 0, 1], ['+', [0, 1]]],
-          ['def', ['idx', 1, 1], ['idx', 0, 0]],
-          ['def', ['idx', 2, 1], ['idx', 1, 0]],
-          ['def', ['idx', 0, 2], ['idx', 0, 1]],
-          ['def', ['idx', 1, 2], ['idx', 2, 1]],
-          ['def', ['idx', 2, 2], ['idx', 1, 1]],
-          ['=',
-           Functor(id=3, desc=transposed_raw_meshgrid, shape=[[0, 2], [0, 3], [0, 2]], iexpr=['i0', 'i2', 'i1'], subs=1),
-           ['ref', 'd_meshgrid_1', ('idx', 1, 0)],
-           2],
-          ['undef', ['idx', 2, 2]],
-          ['undef', ['idx', 1, 2]],
-          ['undef', ['idx', 0, 2]],
-          ['undef', ['idx', 2, 1]],
-          ['undef', ['idx', 1, 1]],
-          ['undef', ['idx', 0, 1]],
-          ['endfor']]}
-===== C =====
-ndafunctor-C [[[1. 2.]
-  [1. 2.]
-  [1. 2.]]
-
- [[3. 3.]
-  [4. 4.]
-  [5. 5.]]]
-
-> cat __jit__/gen_output.c
+       [[3., 3.],
+        [4., 4.],
+        [5., 5.]]], dtype=float32)
+>>> s.print()
+Functor: #3
+    transposed_raw_meshgrid
+    shape=[[0, 2], [0, 3], [0, 2]]
+    iexpr=[
+            i0
+            i2
+            i1
+    ]
+    Functor[0]: #2
+        raw_meshgrid
+        shape=[[0, 1, 2], [0, 2], [0, 3]]
+        iexpr=[
+                0
+                i0
+                i1
+        ]
+        Functor[0]: #0
+            raw_meshgrid[0]
+            shape=[[0, 2], [0, 3]]
+            dexpr=['ref', ['d', 'i0']]
+            data=[1, 2]
+        Functor[1]: #1
+            raw_meshgrid[1]
+            shape=[[0, 2], [0, 3]]
+            dexpr=['ref', ['d', 'i1']]
+            data=[3, 4, 5]
+>>> print(open(f.source).read())
 #include <stdio.h>
 #include <math.h>
 
 // Data
-float d_meshgrid_0[] = {1,2};
-float d_meshgrid_1[] = {3,4,5};
+int d_meshgrid_0[] = {1,2};
+int d_meshgrid_1[] = {3,4,5};
 
-void gen_output(float * output)
+void gen_tensor3(float * tensor3)
 {
     for(int i0=0;i0<2;i0++)
       for(int i1=0;i1<3;i1++)
@@ -113,7 +95,7 @@ void gen_output(float * output)
 #define I0_2 (I0_1)
 #define I1_2 (I2_1)
 #define I2_2 (I1_1)
-            output[I0_2*3*2 + I1_2*2 + I2_2] = d_meshgrid_0[i0];
+            tensor3[I0_2*3*2 + I1_2*2 + I2_2] = d_meshgrid_0[i0];
 #undef I2_2
 #undef I1_2
 #undef I0_2
@@ -130,7 +112,7 @@ void gen_output(float * output)
 #define I0_2 (I0_1)
 #define I1_2 (I2_1)
 #define I2_2 (I1_1)
-            output[I0_2*3*2 + I1_2*2 + I2_2] = d_meshgrid_1[i1];
+            tensor3[I0_2*3*2 + I1_2*2 + I2_2] = d_meshgrid_1[i1];
 #undef I2_2
 #undef I1_2
 #undef I0_2
