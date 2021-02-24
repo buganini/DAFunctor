@@ -20,13 +20,5 @@ cfg = nf.build_cfg([r])
 pp.pprint(cfg)
 
 print("===== C =====")
-testbuild_dir = os.path.join(os.path.dirname(__file__), "..", "test-build")
-os.makedirs(testbuild_dir, exist_ok=True)
-c_name = os.path.basename(__file__)+".c"
-c_path = os.path.join(testbuild_dir, c_name)
-with open(c_path, "w") as f:
-    nf.gen_c(cfg, f)
-print("Generated", c_path)
-
-import tools
-tools.test_c(c_path)
+f = r.jit()
+print("ndafunctor-C", f())

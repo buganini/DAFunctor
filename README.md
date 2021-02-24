@@ -84,20 +84,26 @@ ndafunctor [[[1. 2.]
           ['undef', ['idx', 2, 1]],
           ['undef', ['idx', 1, 1]],
           ['undef', ['idx', 0, 1]],
-          ['endfor']],
- 'symbols': OrderedDict([('output', ('float', [[0, 2], [0, 3], [0, 2]]))])}
+          ['endfor']]}
 ===== C =====
-Generated tests/../test-build/meshgrid_data.py.c
-#include <stdio.h>
+ndafunctor-C [[[1. 2.]
+  [1. 2.]
+  [1. 2.]]
 
-// Tensors
-float output[12];
+ [[3. 3.]
+  [4. 4.]
+  [5. 5.]]]
+
+> cat __jit__/gen_output.c
+#include <stdio.h>
+#include <math.h>
 
 // Data
 float d_meshgrid_0[] = {1,2};
 float d_meshgrid_1[] = {3,4,5};
 
-int main(int argc, char *argv[]){
+void gen_output(float * output)
+{
     for(int i0=0;i0<2;i0++)
       for(int i1=0;i1<3;i1++)
     {
@@ -107,7 +113,7 @@ int main(int argc, char *argv[]){
 #define I0_2 (I0_1)
 #define I1_2 (I2_1)
 #define I2_2 (I1_1)
-        output[I0_2*3*2 + I1_2*2 + I2_2] = d_meshgrid_0[i0];
+            output[I0_2*3*2 + I1_2*2 + I2_2] = d_meshgrid_0[i0];
 #undef I2_2
 #undef I1_2
 #undef I0_2
@@ -124,7 +130,7 @@ int main(int argc, char *argv[]){
 #define I0_2 (I0_1)
 #define I1_2 (I2_1)
 #define I2_2 (I1_1)
-        output[I0_2*3*2 + I1_2*2 + I2_2] = d_meshgrid_1[i1];
+            output[I0_2*3*2 + I1_2*2 + I2_2] = d_meshgrid_1[i1];
 #undef I2_2
 #undef I1_2
 #undef I0_2
@@ -132,24 +138,6 @@ int main(int argc, char *argv[]){
 #undef I1_1
 #undef I0_1
     }
-
-    // Check outputs
-    printf("output\n");
-    for(int i=0;i<12;i++){
-        if(i % 12 == 0) printf("[");
-        if(i % 6 == 0) printf("[");
-        if(i % 2 == 0) printf("[");
-        printf("%.2f", output[i]);
-        int print_space=1;
-        if((i+1) % 12 == 0){ printf("]"); print_space=0; }
-        if((i+1) % 6 == 0){ printf("]"); print_space=0; }
-        if((i+1) % 2 == 0){ printf("]"); print_space=0; }
-        if(print_space) printf(" ");
-    }
-    printf("\n");
-    return 0;
 }
 
-output
-[[[1.00 2.00][1.00 2.00][1.00 2.00]][[3.00 3.00][4.00 4.00][5.00 5.00]]]
 ```
