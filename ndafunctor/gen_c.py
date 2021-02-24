@@ -96,9 +96,9 @@ def gen_c_expr(expr, output, indent=0):
         out = expr[1]
         params = expr[2]
         output.write(" "*indent*intent_spaces)
-        args = [f"{to_c_type(out.dtype)} * {out.name}"]
+        args = [f"{to_c_type(out.get_type())} * {out.name}"]
         for p in params:
-            args.append(f"{to_c_type(p.dtype)} * {p.name}")
+            args.append(f"{to_c_type(p.get_type())} * {p.name}")
         output.write("void gen_{}({})\n".format(out.name, ", ".join(args)))
 
         output.write(" "*indent*intent_spaces)

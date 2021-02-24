@@ -2,23 +2,12 @@ import sys
 import os
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 
+from tools import *
 import ndafunctor as nf
-import numpy
-import pprint
+import numpy as np
 
-pp = pprint.PrettyPrinter()
+g = np.arange(1,5,2)
 
-r = numpy.arange(1,5,2)
-print("numpy", r)
+s = nf.arange(1,5,2)
 
-r = nf.arange(1,5,2)
-print("ndafunctor", r.eval())
-r.output("float", "output")
-
-print("===== CFG =====")
-cfg = nf.build_cfg([r])
-pp.pprint(cfg)
-
-print("===== C =====")
-f = r.jit()
-print("ndafunctor-C", f())
+check_eq(__file__, g, s)

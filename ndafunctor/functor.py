@@ -103,8 +103,9 @@ def eval_expr(functor, expr, index=None):
     elif re.match("d[0-9]+", op):
         ret = functor.data[int(op[1:])]
     elif re.match("i[0-9]+", op):
-        # expr.print()
-        # print(index)
+        # print("functor", functor)
+        # print("op", op)
+        # print("index", index)
         ret = index[int(op[1:])]
     else:
         raise NotImplementedError("Invalid token {}".format(op))
@@ -316,11 +317,6 @@ class Functor():
         for i,s in enumerate(self.subs or []):
             s.print(indent+1, suffix="[{}]".format(i))
 
-
-    def output(self, dtype, name):
-        self.dtype = dtype
-        self.name = name
-
     def eval_index(self, index):
         if self.iexpr is None:
             return index
@@ -355,7 +351,7 @@ class Functor():
                             print("Sub-Functor", functor)
                             print("iexpr")
                             for e in self.iexpr:
-                                print(e)
+                                print(" ", e)
                             print("idx",idx,"offset",offset)
                             print("pidx",pidx)
                             print("data", data.shape)
