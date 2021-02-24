@@ -1,4 +1,5 @@
 import functools
+from .typing import *
 
 intent_spaces = 4
 
@@ -95,9 +96,9 @@ def gen_c_expr(expr, output, indent=0):
         out = expr[1]
         params = expr[2]
         output.write(" "*indent*intent_spaces)
-        args = [f"{out.dtype} * {out.name}"]
+        args = [f"{to_c_type(out.dtype)} * {out.name}"]
         for p in params:
-            args.append(f"{p.dtype} * {p.name}")
+            args.append(f"{to_c_type(p.dtype)} * {p.name}")
         output.write("void gen_{}({})\n".format(out.name, ", ".join(args)))
 
         output.write(" "*indent*intent_spaces)
@@ -122,7 +123,7 @@ def gen_func(ctx, output):
     for sym_name in ctx["data"]:
         dtype, data = ctx["data"][sym_name]
         array = False
-        output.write("{dtype} {name}".format(dtype=dtype, name=sym_name));
+        output.write("{dtype} {name}".format(dtype=to_c_type(dtype), name=sym_name));
         output.write("[] = {")
         output.write(",".join([str(x) for x in data]))
         output.write("};\n");

@@ -16,6 +16,7 @@ import os
 import re
 from functools import reduce
 from .gen_c import *
+from .typing import *
 
 def new_ctx():
     from collections import OrderedDict
@@ -153,7 +154,7 @@ def build_ast(ctx, expr, data, depth):
         return ["ref", ref_a, ref_b]
     elif op == "d":
         name = data.get_name()
-        ctx["data"][name] = ("float", data)
+        ctx["data"][name] = (data.get_type(), data)
         return name
     elif re.match("-?[0-9]+", op):
         return ["term",op]
@@ -217,12 +218,16 @@ class Data(list):
         self.id = Data.acc
         Data.acc += 1
         self.name = name
+        self.dtype = get_list_type(a)
 
     def get_name(self):
         if self.name:
             return "d_{}_{}".format(self.name, self.id)
         else:
             return "d_{}".format(self.id)
+
+    def get_type(self):
+        return self.dtype
 
 class Functor():
     acc = 0
@@ -410,17 +415,21 @@ class Functor():
 
         return blocks
 
+    def get_name(self):
+        if self.name is None:
+            self.name = f"tensor{self.id}"
+
+    def get_type(self):
+        if not self.dtype is None:
+            return self.dtype
+
+        return "f"
+
     def jit(self, *args):
         import sys
         import subprocess
         import ctypes
         import numpy
-
-        for t in (self, *args):
-            if t.name is None:
-                t.name = f"tensor{t.id}"
-            if t.dtype is None:
-                t.dtype = "float"
 
         fname = f"gen_{self.name}"
 
@@ -443,7 +452,7 @@ class Functor():
         f = getattr(dll, fname)
         def func(*args):
             args = [x.ctypes.data_as(ctypes.c_void_p) for x in args]
-            ret = numpy.zeros(self.shape, dtype=numpy.float32)
+            ret = numpy.zeros(self.shape, dtype=to_numpy_type(self.get_type()))
             pointer = ret.ctypes.data_as(ctypes.c_void_p)
             f(pointer, *args)
             return ret
