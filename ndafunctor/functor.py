@@ -442,6 +442,7 @@ class Functor():
         dll = ctypes.CDLL(so_path)
         f = getattr(dll, fname)
         def func(*args):
+            args = [x.ctypes.data_as(ctypes.c_void_p) for x in args]
             ret = numpy.zeros(self.shape, dtype=numpy.float32)
             pointer = ret.ctypes.data_as(ctypes.c_void_p)
             f(pointer, *args)
