@@ -12,13 +12,14 @@
 #  f{n} n-th sub-functor
 #  d data value
 
+import os
 import re
 from functools import reduce
+from .gen_c import *
 
 def new_ctx():
     from collections import OrderedDict
     ctx = {
-        "symbols": OrderedDict(),
         "data": OrderedDict(),
         "stmt": [],
     }
@@ -361,13 +362,12 @@ class Functor():
     def build_cfg(self, ctx):
         if ctx is None:
             ctx = new_ctx()
-        ctx["symbols"][self.name] = (self.dtype, self.shape)
 
         for slice, spec, offset in self.build_blocks():
             ctx["stmt"].append(["for", [x[1] for x in slice]])
             stmt = []
             mapping = []
-            symbol, depth = build_stmt({"symbols":ctx["symbols"], "data":ctx["data"], "stmt": stmt, "map":mapping}, self, spec, offset)
+            symbol, depth = build_stmt({"data":ctx["data"], "stmt": stmt, "map":mapping}, self, spec, offset)
             for m in mapping:
                 ctx["stmt"].append(["def", m[0], m[1]])
             ctx["stmt"].append(["=", self, symbol, depth])
@@ -409,3 +409,41 @@ class Functor():
             blocks.append((slice,{},{}))
 
         return blocks
+
+    def jit(self, *args):
+        import sys
+        import subprocess
+        import ctypes
+        import numpy
+
+        for t in (self, *args):
+            if t.name is None:
+                t.name = f"tensor{t.id}"
+            if t.dtype is None:
+                t.dtype = "float"
+
+        fname = f"gen_{self.name}"
+
+        jitdir = os.path.realpath("__jit__")
+        os.makedirs(jitdir, exist_ok=True)
+
+        ctx = new_ctx()
+        ctx["stmt"].append(["func", self, args])
+        self.build_cfg(ctx)
+        ctx["stmt"].append(["endfunc"])
+
+        cfile = os.path.join(jitdir, fname+".c")
+        with open(cfile, "w") as f:
+            gen_func(ctx, f)
+
+        so_path = os.path.join(jitdir, fname+".so")
+        subprocess.check_output(["cc", "-fPIC", "-shared", "-o", so_path, cfile])
+
+        dll = ctypes.CDLL(so_path)
+        f = getattr(dll, fname)
+        def func(*args):
+            ret = numpy.zeros(self.shape, dtype=numpy.float32)
+            pointer = ret.ctypes.data_as(ctypes.c_void_p)
+            f(pointer, *args)
+            return ret
+        return func

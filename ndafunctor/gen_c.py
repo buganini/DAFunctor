@@ -1,5 +1,4 @@
 import functools
-from .functor import *
 
 intent_spaces = 4
 
@@ -14,30 +13,32 @@ def gen_c_expr(expr, output, indent=0):
             output.write("{}for(int i{i}=0;i{i}<{n};i{i}++)\n".format(" "*i*2, i=i, n=shape[i]))
         output.write(" "*indent*intent_spaces)
         output.write("{\n")
+        return indent + 1
 
     elif expr[0] == "endfor":
-        output.write(" "*indent*intent_spaces)
+        output.write(" "*(indent-1)*intent_spaces)
         output.write("}\n")
+        return indent - 1
 
     elif expr[0] == "=":
-        if type(expr[1]) is Functor:
-            tensor = expr[1]
-            value_expr = expr[2]
-            depth = expr[3]
-            idx = []
-            for i in range(len(tensor.shape)):
-                if depth:
-                    didx = ["I{}_{}".format(i, depth)]
-                else:
-                    didx = ["i{}".format(i)]
-                for j in range(i+1,len(tensor.shape)):
-                    didx.append("{}".format(tensor.shape[j]))
-                idx.append("*".join(didx))
-            idx = " + ".join(idx)
-            output.write(" "*(indent+1)*intent_spaces)
-            output.write("{name}[{idx}] = ".format(name=tensor.name, idx=idx))
-            output.write(gen_c_expr(value_expr, output, indent=indent+1))
-            output.write(";\n")
+        tensor = expr[1]
+        value_expr = expr[2]
+        depth = expr[3]
+        idx = []
+        for i in range(len(tensor.shape)):
+            if depth:
+                didx = ["I{}_{}".format(i, depth)]
+            else:
+                didx = ["i{}".format(i)]
+            for j in range(i+1,len(tensor.shape)):
+                didx.append("{}".format(tensor.shape[j]))
+            idx.append("*".join(didx))
+        idx = " + ".join(idx)
+        output.write(" "*(indent+1)*intent_spaces)
+        output.write("{name}[{idx}] = ".format(name=tensor.name, idx=idx))
+        output.write(gen_c_expr(value_expr, output, indent=indent+1))
+        output.write(";\n")
+        return indent
 
     elif expr[0] == "idx":
         if expr[2]==0:
@@ -88,21 +89,31 @@ def gen_c_expr(expr, output, indent=0):
     elif expr[0] == "term":
         return str(expr[1])
 
+    elif expr[0] == "func":
+        out = expr[1]
+        params = expr[2]
+        output.write(" "*indent*intent_spaces)
+        args = [f"{out.dtype} * {out.name}"]
+        for p in params:
+            args.append(f"{p.dtype} * {p.name}")
+        output.write("void gen_{}({})\n".format(out.name, ", ".join(args)))
+
+        output.write(" "*indent*intent_spaces)
+        output.write("{\n")
+        return indent + 1
+
+    elif expr[0] == "endfunc":
+        output.write(" "*(indent-1)*intent_spaces)
+        output.write("}\n\n")
+        return indent - 1
+
     else:
         raise NotImplementedError("Unknown expr op {}".format(expr[0]))
 
-def gen_c(ctx, output):
+def gen_func(ctx, output):
     output.write("#include <stdio.h>\n");
+    output.write("#include <math.h>\n");
     output.write("\n")
-
-    if ctx["symbols"]:
-        output.write("// Tensors\n");
-    for sym_name in ctx["symbols"]:
-        dtype, shape = ctx["symbols"][sym_name]
-        output.write("{dtype} {name}[{size}];\n".format(dtype=dtype, name=sym_name, size=shape.size()));
-    if ctx["symbols"]:
-        output.write("\n")
-
 
     if ctx["data"]:
         output.write("// Data\n");
@@ -116,46 +127,7 @@ def gen_c(ctx, output):
     if ctx["data"]:
         output.write("\n");
 
-    output.write("int main(int argc, char *argv[]){\n")
+    indent = 0
     for expr in ctx["stmt"]:
-        gen_c_expr(expr, output, indent=1)
+        indent = gen_c_expr(expr, output, indent)
 
-    output.write("\n");
-
-    output.write(" "*(1)*intent_spaces)
-    output.write("// Check outputs\n");
-    for sym_name in ctx["symbols"]:
-        dtype, shape = ctx["symbols"][sym_name]
-        output.write(" "*(1)*intent_spaces)
-        output.write("printf(\"{}\\n\");\n".format(sym_name))
-        output.write(" "*(1)*intent_spaces)
-        output.write("for(int i=0;i<{};i++){{\n".format(shape.size()))
-
-        for i in range(len(shape)):
-            output.write(" "*(2)*intent_spaces)
-            output.write("if(i % {} == 0) printf(\"[\");\n".format(functools.reduce(lambda a,b:a*b, shape[i:])))
-
-        output.write(" "*(2)*intent_spaces)
-        output.write("printf(\"%.2f\", {}[i]);\n".format(sym_name));
-
-        output.write(" "*(2)*intent_spaces)
-        output.write("int print_space=1;\n")
-        for i in range(len(shape)):
-            output.write(" "*(2)*intent_spaces)
-            output.write("if((i+1) % {} == 0){{ printf(\"]\"); print_space=0; }}\n".format(functools.reduce(lambda a,b:a*b, shape[i:])))
-        output.write(" "*(2)*intent_spaces)
-        output.write("if(print_space) printf(\" \");\n")
-
-        output.write(" "*(1)*intent_spaces)
-        output.write("}\n")
-
-        output.write(" "*(1)*intent_spaces)
-        output.write("printf(\"\\n\");");
-
-
-    output.write("\n");
-
-    output.write(" "*(1)*intent_spaces)
-    output.write("return 0;\n");
-
-    output.write("}\n")
