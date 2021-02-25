@@ -422,7 +422,7 @@ class Functor():
 
         return "f"
 
-    def jit(self, *args):
+    def jit(self, *args, cflags=["-O2"]):
         import sys
         import subprocess
         import ctypes
@@ -443,7 +443,7 @@ class Functor():
             gen_func(ctx, f)
 
         so_path = os.path.join(jitdir, fname+".so")
-        subprocess.check_output(["cc", "-fPIC", "-shared", "-o", so_path, cfile])
+        subprocess.check_output(["cc", "-fPIC"] + cflags + ["-shared", "-o", so_path, cfile])
 
         dll = ctypes.CDLL(so_path)
         f = getattr(dll, fname)
