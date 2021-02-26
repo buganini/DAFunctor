@@ -91,7 +91,7 @@ def repeat(a, repeats, axis=None):
             shape[axis] *= repeats
             iexpr = [f"i{i}" for i in range(len(shape))]
             iexpr[axis] = ["*", [f"i{axis}", repeats]]
-            sexpr = [(axis, 1, repeats-1, 1)]
+            sexpr = [(axis, 0, repeats, 1)]
             return Functor(
                 shape,
                 iexpr = iexpr,
