@@ -11,4 +11,4 @@ def f(np):
 
 g = f(np)
 s = f(nf)
-check_eq(__file__, g, s)
+check_eq("zeros", g, s)
