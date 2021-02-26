@@ -369,11 +369,7 @@ class Functor():
             stmt = []
             mapping = []
             symbol, depth = build_stmt({"data":ctx["data"], "stmt": stmt, "map":mapping}, self, spec, offset)
-            for m in mapping:
-                ctx["stmt"].append(["def", m[0], m[1]])
-            ctx["stmt"].append(["=", self, symbol, depth])
-            for m in mapping[::-1]:
-                ctx["stmt"].append(["undef", m[0]])
+            ctx["stmt"].append(["let", mapping, ["=", self, symbol, depth]])
             ctx["stmt"].append(["endfor"])
 
         return ctx

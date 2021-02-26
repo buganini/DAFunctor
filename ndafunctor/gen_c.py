@@ -47,20 +47,25 @@ def gen_c_expr(expr, output, indent=0):
         else:
             return f"I{expr[1]}_{expr[2]}"
 
-    elif expr[0] == "def":
-        output.write("#define ")
-        output.write(gen_c_expr(expr[1], output, indent=0))
-        output.write(" ")
-        output.write("(")
-        output.write(gen_c_expr(expr[2], output, indent=0))
-        output.write(")")
-        output.write("\n")
-        return indent
-
-    elif expr[0] == "undef":
-        output.write("#undef ")
-        output.write(gen_c_expr(expr[1], output, indent=0))
-        output.write("\n")
+    elif expr[0] == "let":
+        mapping = expr[1]
+        sub = expr[2]
+        defs = []
+        for m in mapping:
+            symbol = gen_c_expr(m[0], output, indent=0)
+            defs.append(symbol)
+            output.write("#define ")
+            output.write(symbol)
+            output.write(" ")
+            output.write("(")
+            output.write(gen_c_expr(m[1], output, indent=0))
+            output.write(")")
+            output.write("\n")
+        gen_c_expr(sub, output, indent=indent)
+        for s in defs[::-1]:
+            output.write("#undef ")
+            output.write(s)
+            output.write("\n")
         return indent
 
     elif expr[0] == "ref":
