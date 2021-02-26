@@ -7,7 +7,7 @@ import pprint
 
 pp = pprint.PrettyPrinter()
 
-def test_func(test, f, *args, **kwargs):
+def test_func(test, f, *args, params=tuple(), **kwargs):
     golden = f(np, *args, **kwargs)
 
     symbols = f(nf, *args, **kwargs)
@@ -24,12 +24,13 @@ def test_func(test, f, *args, **kwargs):
         raise ValueError("eval() mismatch")
 
     try:
-        func = symbols.jit(*args)
+        func = symbols.jit(*params)
     except:
         symbols.print()
+        pp.pprint(symbols.build_cfg())
         raise
 
-    cv = func(*args)
+    cv = func(*params)
     if not np.array_equal(golden, cv):
         symbols.print()
         pp.pprint(symbols.build_cfg())
