@@ -1,10 +1,4 @@
-import sys
-import os
-sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
-
-from tools import *
-import ndafunctor as nf
-import numpy as np
+from _tester import *
 
 def f(np):
     a = [[1,2,3],[4,5,6]]
@@ -12,6 +6,4 @@ def f(np):
 
     return np.concatenate([np.array(a), np.array(b)], axis=1)
 
-g = f(np)
-s = f(nf)
-check_eq("concatenate", g, s)
+test_func("concatenate", f)

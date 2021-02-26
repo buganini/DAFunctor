@@ -1,14 +1,6 @@
-import sys
-import os
-sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
-
-from tools import *
-import ndafunctor as nf
-import numpy as np
+from _tester import *
 
 def f(np):
     return np.ones((2,3,4))
 
-g = f(np)
-s = f(nf)
-check_eq("ones", g, s)
+test_func("ones", f)

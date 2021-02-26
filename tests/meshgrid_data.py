@@ -1,10 +1,4 @@
-import sys
-import os
-sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
-
-from tools import *
-import ndafunctor as nf
-import numpy as np
+from _tester import *
 
 def f(np):
     r = np.meshgrid([1,2],[3,4,5],[6,7,8,9])
@@ -12,6 +6,4 @@ def f(np):
         r = np.array(r)
     return r
 
-g = f(np)
-s = f(nf)
-check_eq("meshgrid_data", g, s)
+test_func("meshgrid_data", f)
