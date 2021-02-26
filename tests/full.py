@@ -6,8 +6,9 @@ from tools import *
 import numpy as np
 import ndafunctor as nf
 
-g = np.full((2,3,4),7)
+def f(np):
+    return np.full((2,3,4),7)
 
-s = nf.full((2,3,4),7)
-
+g = f(np)
+s = f(nf)
 check_eq(__file__, g, s)

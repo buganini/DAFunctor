@@ -6,11 +6,12 @@ from tools import *
 import ndafunctor as nf
 import numpy as np
 
-a = [[1,2,3],[4,5,6]]
-b = [[7,8,9],[10,11,12]]
+def f(np):
+    a = [[1,2,3],[4,5,6]]
+    b = [[7,8,9],[10,11,12]]
 
-g = np.concatenate([np.array(a), np.array(b)], axis=1)
+    return np.concatenate([np.array(a), np.array(b)], axis=1)
 
-s = nf.concatenate([nf.array(a), nf.array(b)], axis=1)
-
+g = f(np)
+s = f(nf)
 check_eq(__file__, g, s)

@@ -6,8 +6,9 @@ from tools import *
 import ndafunctor as nf
 import numpy as np
 
-g = np.arange(1,5,2)
+def f(np):
+    return np.arange(1,5,2)
 
-s = nf.arange(1,5,2)
-
+g = f(np)
+s = f(nf)
 check_eq(__file__, g, s)

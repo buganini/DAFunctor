@@ -6,8 +6,9 @@ from tools import *
 import ndafunctor as nf
 import numpy as np
 
-g = np.ones((2,3,4))
+def f(np):
+    return np.ones((2,3,4))
 
-s = nf.ones((2,3,4))
-
+g = f(np)
+s = f(nf)
 check_eq(__file__, g, s)

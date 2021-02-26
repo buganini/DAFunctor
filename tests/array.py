@@ -6,10 +6,10 @@ from tools import *
 import numpy as np
 import ndafunctor as nf
 
-a = [[[1],[2],[3]],[[4],[5],[6]]]
+def f(np):
+    a = [[[1],[2],[3]],[[4],[5],[6]]]
+    return np.array(a)
 
-g = np.array(a)
-
-s = nf.array(a)
-
+g = f(np)
+s = f(nf)
 check_eq(__file__, g, s)

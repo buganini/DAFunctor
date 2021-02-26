@@ -6,8 +6,12 @@ from tools import *
 import ndafunctor as nf
 import numpy as np
 
-g = np.array(np.meshgrid([1,2],[3,4,5],[6,7,8,9]))
+def f(np):
+    r = np.meshgrid([1,2],[3,4,5],[6,7,8,9])
+    if type(r) is list:
+        r = np.array(r)
+    return r
 
-s = nf.meshgrid([1,2],[3,4,5],[6,7,8,9])
-
+g = f(np)
+s = f(nf)
 check_eq(__file__, g, s)

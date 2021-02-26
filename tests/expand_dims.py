@@ -6,8 +6,9 @@ from tools import *
 import ndafunctor as nf
 import numpy as np
 
-g = np.expand_dims(np.arange(1,6), axis=1)
+def f(np):
+    return np.expand_dims(np.arange(1,6), axis=1)
 
-s = nf.expand_dims(nf.arange(1,6), axis=1)
-
+g = f(np)
+s = f(nf)
 check_eq(__file__, g, s)
