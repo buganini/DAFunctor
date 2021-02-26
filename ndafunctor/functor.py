@@ -232,7 +232,7 @@ class Data(list):
 
 class Functor():
     acc = 0
-    def __init__(self, shape, dtype=None, dexpr=None, iexpr=None, data=None, subs=[], desc=None):
+    def __init__(self, shape, dtype=None, dexpr=None, iexpr=None, sexpr=None, data=None, subs=[], desc=None):
         # external perspective
         self.id = Functor.acc
         Functor.acc += 1
@@ -243,6 +243,7 @@ class Functor():
         # internal perspective
         self.dexpr = dexpr # data expression, evaluate from index/data to value
         self.iexpr = iexpr # index expression, evaluate from sub-functor index to index for this functor
+        self.sexpr = sexpr # scatter expression, map one index to multiple indices
         if data: # static data
             if type(data) is Data:
                 self.data = data
@@ -326,6 +327,15 @@ class Functor():
                 for i,iexpr in enumerate(self.iexpr)
             ])
 
+    def eval_scatter(self, data, idx, scatters):
+        if scatters is None:
+            return
+        for axis,start,num,step in scatters:
+            for i in range(num):
+                sidx = list(idx)
+                sidx[axis] += start + i*step
+                data[tuple(sidx)] = data[idx]
+
     def eval(self):
         if self.eval_cached is None:
             import itertools
@@ -337,6 +347,7 @@ class Functor():
                 for idx in itertools.product(*[range(b,b+n) for b,n in slice]):
                     pidx = self.eval_index(idx)
                     data[pidx] = eval_expr(self, Expr(self.dexpr, self), idx)
+                    self.eval_scatter(data, pidx, self.sexpr)
             else:
                 for i,slice in enumerate(self.shape.slices()):
                     functor = self.subs[i]
@@ -357,6 +368,7 @@ class Functor():
                             print("data", data.shape)
                             print("==================")
                             raise
+                        self.eval_scatter(data, pidx, self.sexpr)
             self.eval_cached = data
         return self.eval_cached
 

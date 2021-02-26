@@ -80,3 +80,29 @@ def expand_dims(a, axis):
         desc = f"expand_dims_{axis}_{a.desc}",
         subs = [a]
     )
+
+def repeat(a, repeats, axis=None):
+    if type(a) is Functor:
+        if axis is None:
+            # XXX
+            raise NotImplementedError("repeat(ndarray, axis=None) is not implemented")
+        else:
+            shape = list(a.shape)
+            shape[axis] *= repeats
+            iexpr = [f"i{i}" for i in range(len(shape))]
+            iexpr[axis] = ["*", [f"i{axis}", repeats]]
+            sexpr = [(axis, 1, repeats-1, 1)]
+            return Functor(
+                shape,
+                iexpr = iexpr,
+                sexpr = sexpr,
+                desc = f"repeat_{repeats}",
+                subs = [a]
+            )
+    else:
+        shape = [repeats]
+        return Functor(
+            shape,
+            desc = f"repeat_{repeats}",
+            dexpr = a
+        )
