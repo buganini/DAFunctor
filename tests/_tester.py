@@ -21,6 +21,7 @@ def test_func(test, f, *args, params=tuple(), **kwargs):
     if not np.array_equal(golden, ev):
         print("Golden", golden)
         print("Eval", ev)
+        symbols.print()
         raise ValueError("eval() mismatch")
 
     try:

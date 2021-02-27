@@ -167,51 +167,6 @@ def build_ast(ctx, expr, data, depth):
     else:
         raise NotImplementedError("Invalid token {}".format(op))
 
-class Shape():
-    def __init__(self, shape):
-        self.shape = self.ensure_list(shape)
-
-    def slices(self):
-        import itertools
-        ret = []
-        for axis_slices in self.shape:
-            dslices = []
-            b = axis_slices[0]
-            for e in axis_slices[1:]:
-                dslices.append((b,e-b))
-                b = e
-            ret.append(dslices)
-        return list(itertools.product(*ret))
-
-    def __str__(self):
-        return str(self.shape)
-
-    def __repr__(self):
-        return self.__str__()
-
-    def __len__(self):
-        return len(self.shape)
-
-    def __getitem__(self, idx):
-        return [x[-1]-x[0] for x in self.shape][idx]
-
-    def size(self):
-        size = 1
-        for s in self:
-            size *= s
-        return size
-
-    def ensure_list(self, shape):
-        if type(shape) is Shape:
-            return shape.shape
-        ret = []
-        for s in shape:
-            if type(s) is int:
-                ret.append([0,s])
-            else:
-                ret.append(list(s))
-        return ret
-
 class Data(list):
     acc = 0
     def __init__(self, a, name=None):
@@ -232,11 +187,12 @@ class Data(list):
 
 class Functor():
     acc = 0
-    def __init__(self, shape, dtype=None, dexpr=None, iexpr=None, sexpr=None, data=None, subs=[], desc=None):
+    def __init__(self, shape, ranges=None, dtype=None, dexpr=None, iexpr=None, sexpr=None, data=None, subs=[], desc=None):
         # external perspective
         self.id = Functor.acc
         Functor.acc += 1
-        self.shape = Shape(shape)
+        self.shape = tuple(shape)
+        self.ranges = ranges
         self.dtype = dtype
         self.desc = desc
 
@@ -266,6 +222,8 @@ class Functor():
         d.append("id={}".format(self.id ))
         d.append("desc={}".format(self.desc))
         d.append("shape={}".format(self.shape))
+        if self.ranges:
+            d.append("ranges={}".format(self.ranges))
         if self.iexpr:
             d.append("iexpr={}".format(self.iexpr))
         if self.subs:
@@ -318,6 +276,21 @@ class Functor():
         for i,s in enumerate(self.subs or []):
             s.print(indent+1, suffix="[{}]".format(i))
 
+    def size(self):
+        sz = 1
+        for s in self.shape:
+            sz *= s
+        return sz
+
+    def get_ranges(self):
+        if self.ranges is None:
+            return [[
+                (0,s,1)
+                for s in self.shape
+            ]]
+        else:
+            return self.ranges
+
     def eval_index(self, index):
         if self.iexpr is None:
             return index
@@ -342,16 +315,16 @@ class Functor():
             import numpy
             data = numpy.zeros(self.shape)
             if not self.dexpr is None:
-                slice = self.shape.slices()[0]
-                offset = [x[0] for x in slice]
-                for idx in itertools.product(*[range(b,b+n) for b,n in slice]):
+                rg = self.get_ranges()[0]
+                offset = [x[0] for x in rg]
+                for idx in itertools.product(*[range(base,base+num*step,step) for base,num,step in rg]):
                     pidx = self.eval_index(idx)
                     data[pidx] = eval_expr(self, Expr(self.dexpr, self), idx)
                     self.eval_scatter(data, pidx, self.sexpr)
             else:
-                for i,slice in enumerate(self.shape.slices()):
+                for i, rg in enumerate(self.get_ranges()):
                     functor = self.subs[i]
-                    offset = [x[0] for x in slice]
+                    offset = [x[0] for x in rg]
                     for idx in itertools.product(*[range(n) for n in functor.shape]):
                         pidx = tuple([sum(x) for x in zip(offset, self.eval_index(idx))])
                         v = functor.eval()
@@ -372,7 +345,7 @@ class Functor():
             self.eval_cached = data
         return self.eval_cached
 
-    def build_cfg(self, ctx):
+    def build_cfg(self, ctx=None):
         if ctx is None:
             ctx = new_ctx()
 
@@ -390,8 +363,8 @@ class Functor():
         blocks = []
 
         if not self.dexpr is None:
-            slice = self.shape.slices()[0]
-            offset = [x[0] for x in slice]
+            rg = self.get_ranges()[0]
+            offset = [x[0] for x in rg]
             for e in Expr(self.dexpr, self).search(r"f[0-9]+"):
                 i = int(e[1:])
                 sf = self.subs[i]
@@ -401,10 +374,10 @@ class Functor():
                     soffset[path] = offset
                     blocks.append((sub_slice, sub_spec, soffset))
         else:
-            for i,slice in enumerate(self.shape.slices()):
+            for i,rg in enumerate(self.get_ranges()):
                 functor = self.subs[i]
                 spath = tuple((*path, i))
-                offset = [x[0] for x in slice]
+                offset = [x[0] for x in rg]
 
                 for sub_slice, sub_spec, sub_offset in self.subs[i].build_blocks(spath):
                     sspec = dict(sub_spec)
@@ -414,8 +387,8 @@ class Functor():
                     blocks.append((sub_slice, sspec, soffset))
 
         if not blocks:
-            slice = self.shape.slices()[0]
-            blocks.append((slice,{},{}))
+            rg = self.get_ranges()[0]
+            blocks.append((rg,{},{}))
 
         return blocks
 

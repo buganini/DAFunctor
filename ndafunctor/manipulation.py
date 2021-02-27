@@ -1,4 +1,4 @@
-from .functor import Functor, Shape
+from .functor import Functor
 from .ast import strip as ast_strip
 
 def transpose(functor, dims):
@@ -50,9 +50,15 @@ def stack(array, axis=0):
     iexpr = [f"i{i}" for i in range(len(array[0].shape))]
     iexpr.insert(axis, 0)
     shape = list(array[0].shape)
-    shape.insert(axis, list(range(0,len(array)+1)))
+    shape.insert(axis, len(array))
+    ranges = []
+    for i in range(len(array)):
+        rgs = [(0,s,1) for s in shape]
+        rgs[axis] = (i,1,1)
+        ranges.append(rgs)
     return Functor(
         shape,
+        ranges = ranges,
         iexpr = iexpr,
         desc = f"stack_{axis}",
         subs = array
@@ -61,9 +67,16 @@ def stack(array, axis=0):
 def concatenate(array, axis=0):
     iexpr = [f"i{i}" for i in range(len(array[0].shape))]
     shape = list(array[0].shape)
-    shape[axis] = [shape[axis]*(i) for i in range(len(array)+1)]
+    orig_shape = shape[axis]
+    shape[axis] *= len(array)
+    ranges = []
+    for i in range(len(array)):
+        rgs = [(0,s,1) for s in shape]
+        rgs[axis] = (i*orig_shape,orig_shape,1)
+        ranges.append(rgs)
     return Functor(
         shape,
+        ranges = ranges,
         iexpr = iexpr,
         desc = "concatenate",
         subs = array

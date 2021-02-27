@@ -98,23 +98,35 @@ def arange(*args):
     )
 
 def raw_meshgrid(*args):
-    shape = [range(0,len(args)+1)]
+    shape = [len(args)]
+    ranges = []
     for i in range(len(args)):
         shape.append(len(args[i]))
+        rgs = [(i,1,1)]
+        for j in range(len(args)):
+            rgs.append((0,len(args[j]),1))
+        ranges.append(rgs)
     # data[i0][i[i0+1]]
     subs = []
-    for i in range(len(args)):
-        subs.append(Functor(
-            shape[1:],
-            dexpr = ["ref",["d",f"i{i}"]], # data[i{i0+1}]]
-            data = Data(args[i], "meshgrid"),
-            desc = f"raw_meshgrid[{i}]"
-        ))
+    for i,arg in enumerate(args):
+        if type(arg) is Functor:
+            if len(arg.shape) == 1:
+                raise NotImplementedError()
+            else:
+                raise ValueError("meshgrid only accept 1-D array inputs")
+        else:
+            subs.append(Functor(
+                shape[1:],
+                dexpr = ["ref",["d",f"i{i}"]], # data[i{i0+1}]]
+                data = Data(arg, "meshgrid"),
+                desc = f"raw_meshgrid[{i}]"
+            ))
     iexpr = [0]
     for i in range(len(shape)-1):
         iexpr.append(f"i{i}")
     return Functor(
         shape,
+        ranges = ranges,
         iexpr = iexpr,
         subs = subs,
         desc = "raw_meshgrid"
