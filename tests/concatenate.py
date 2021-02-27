@@ -6,5 +6,5 @@ def f(np, axis):
 
     return np.concatenate([np.array(a), np.array(b)], axis=axis)
 
-test_func("concatenate", f, 0)
-test_func("concatenate", f, 1)
+test_func("concatenate_axis0", f, 0)
+test_func("concatenate_axis1", f, 1)

@@ -423,7 +423,7 @@ class Functor():
         with open(cfile, "w") as f:
             gen_func(ctx, f)
 
-        so_path = os.path.join(jitdir, fname+".so")
+        so_path = os.path.join(jitdir, f"{fname}_{self.id}.so")
         subprocess.check_output(["cc", "-fPIC"] + cflags + ["-shared", "-o", so_path, cfile])
 
         dll = ctypes.CDLL(so_path)
