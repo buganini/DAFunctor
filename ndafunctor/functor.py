@@ -9,7 +9,6 @@
 
 ## Value
 #  i{n} index on n-th axis
-#  f{n} n-th sub-functor
 #  d data value
 
 import os
@@ -17,14 +16,35 @@ import re
 from functools import reduce
 from .gen_c import *
 from .typing import *
+from collections import OrderedDict
 
-def new_ctx():
-    from collections import OrderedDict
-    ctx = {
-        "data": OrderedDict(),
-        "stmt": [],
-    }
-    return ctx
+class CFG():
+    def __init__(self, target, parent=None, data=None):
+        self.target = target
+        self.parent = parent
+        if parent is None:
+            self.depth = -1
+        else:
+            self.depth = parent.depth + 1
+        self.data = data
+        if self.data is None:
+            self.data = OrderedDict()
+        self.stmt = []
+        self.output = False
+
+    def __repr__(self):
+        return str(self.stmt)
+
+    def __str__(self):
+        return self.__repr__()
+
+    def append(self, stmt):
+        self.stmt.append(stmt)
+
+    def enter(self):
+        scope = CFG(self.target, parent=self, data=self.data)
+        self.append(["scope", scope])
+        return scope
 
 class Expr():
     def __init__(self, expr, ref_functor=None, ref_i=None):
@@ -115,30 +135,40 @@ def eval_expr(functor, expr, index=None):
 
     return ret
 
-def build_stmt(ctx, functor, spec, offset, path=tuple(), subs=[], data=[]):
-    if not functor.dexpr is None:
-        subs = []
-        ddepth = 0
-        for i in range(len(functor.subs)):
-            spath = tuple((*path, i))
-            sub, sdepth = build_stmt(ctx, functor.subs[i], spec, offset, spath, functor.subs[i].data)
-            for d,iexpr in enumerate(functor.iexpr):
-                if path in offset and offset[path][d]:
-                    iexpr = ["+"] + iexpr + [offset[path][d]]
-                ctx["map"].append((["idx", d, sdepth+1], build_ast(ctx, Expr(iexpr), functor.subs[i].data, sdepth)))
-            ddepth = sdepth + 1
-            subs.append(sub)
-        return build_ast(ctx, Expr(functor.dexpr), functor.data, ddepth), ddepth
-    else:
-        i = spec[path]
-        spath = tuple((*path, i))
-        sym, sdepth = build_stmt(ctx, functor.subs[i], spec, offset, spath, functor.subs[i].data)
-        if functor.iexpr:
-            for d,iexpr in enumerate(functor.iexpr):
-                if path in offset and offset[path][d]:
-                    iexpr = ["+", [iexpr,  offset[path][d]]]
-                ctx["map"].append((["idx", d, sdepth+1], build_ast(ctx, Expr(iexpr), functor.subs[i].data, sdepth)))
-        return sym, sdepth+1
+def build_cfg(ctx, path):
+    value = None
+    scope = ctx
+    idepth = 0
+    for depth, (functor, rg, sidx) in enumerate(path):
+        if depth == 0:
+            scope.append(["for_shape", [x[1] for x in rg], scope.depth + 1, idepth])
+            scope = scope.enter()
+
+        if not functor.dexpr is None:
+            if functor.iexpr:
+                for d,iexpr in enumerate(functor.iexpr):
+                    iexpr = ["+", [iexpr + [rg[d][0]]]]
+                    scope.append(["val", "i", ["idx", d, scope.depth, idepth+1], build_ast(scope, Expr(iexpr), functor.subs[sidx].data, idepth)])
+                idepth += 1
+            value = build_ast(scope, Expr(functor.dexpr), functor.data, depth)
+        else:
+            if functor.iexpr:
+                for d,iexpr in enumerate(functor.iexpr):
+                    iexpr = ["+", [iexpr,  rg[d][0]]]
+                    scope.append(["val","i", ["idx", d, scope.depth, idepth+1], build_ast(scope, Expr(iexpr), functor.subs[sidx].data, idepth)])
+                idepth += 1
+
+        output = False
+
+        final_out = depth + 1 == len(path)
+        if not functor.sexpr is None: # scatter
+            val = ["v", scope.depth]
+            scope.append(["val", path[-1][0].get_type(), val, value])
+            scope.append(["for_scatter", functor.shape, functor.sexpr, scope.depth + 1, idepth])
+            scope = scope.enter()
+            value = val
+        if final_out:
+            scope.append(["=", functor, value, idepth, scope.depth])
 
 def build_ast(ctx, expr, data, depth):
     op = expr.op
@@ -155,7 +185,7 @@ def build_ast(ctx, expr, data, depth):
         return ["ref", ref_a, ref_b]
     elif op == "d":
         name = data.get_name()
-        ctx["data"][name] = (data.get_type(), data)
+        ctx.data[name] = (data.get_type(), data)
         return name
     elif re.match("-?[0-9]+", op):
         return ["term",op]
@@ -163,7 +193,7 @@ def build_ast(ctx, expr, data, depth):
         i = int(op[1:])
         return ["term", data[i]]
     elif re.match("i[0-9]+", op):
-        return ["idx", int(op[1:]), depth]
+        return ["idx", int(op[1:]), ctx.depth, depth]
     else:
         raise NotImplementedError("Invalid token {}".format(op))
 
@@ -253,6 +283,10 @@ class Functor():
 
         print(" "*(indent+1)*indent__num, end="")
         print("shape={}".format(self.shape))
+
+        if not self.ranges is None:
+            print(" "*(indent+1)*indent__num, end="")
+            print("ranges={}".format(self.ranges))
 
         if not self.dexpr is None:
             print(" "*(indent+1)*indent__num, end="")
@@ -347,50 +381,29 @@ class Functor():
 
     def build_cfg(self, ctx=None):
         if ctx is None:
-            ctx = new_ctx()
+            ctx = CFG(self)
 
-        for slice, spec, offset in self.build_blocks():
-            ctx["stmt"].append(["for", [x[1] for x in slice]])
-            stmt = []
-            mapping = []
-            symbol, depth = build_stmt({"data":ctx["data"], "stmt": stmt, "map":mapping}, self, spec, offset)
-            ctx["stmt"].append(["let", mapping, ["=", self, symbol, depth]])
-            ctx["stmt"].append(["endfor"])
-
+        for path in self.build_blocks():
+            build_cfg(ctx, path)
         return ctx
 
-    def build_blocks(self, path=tuple()):
-        blocks = []
-
+    def build_blocks(self):
+        paths = []
         if not self.dexpr is None:
             rg = self.get_ranges()[0]
-            offset = [x[0] for x in rg]
-            for e in Expr(self.dexpr, self).search(r"f[0-9]+"):
-                i = int(e[1:])
-                sf = self.subs[i]
-                spath = tuple((*path, i))
-                for sub_slice, sub_spec, sub_offset in sf.build_blocks(spath):
-                    soffset = dict(sub_offset)
-                    soffset[path] = offset
-                    blocks.append((sub_slice, sub_spec, soffset))
+            for i in range(len(self.subs)):
+                for b in self.subs[i].build_blocks():
+                    paths.append(b + [(self, rg, i)])
         else:
             for i,rg in enumerate(self.get_ranges()):
-                functor = self.subs[i]
-                spath = tuple((*path, i))
-                offset = [x[0] for x in rg]
+                for b in self.subs[i].build_blocks():
+                    paths.append(b + [(self, rg, i)])
 
-                for sub_slice, sub_spec, sub_offset in self.subs[i].build_blocks(spath):
-                    sspec = dict(sub_spec)
-                    sspec[path] = i
-                    soffset = dict(sub_offset)
-                    soffset[path] = offset
-                    blocks.append((sub_slice, sspec, soffset))
-
-        if not blocks:
+        if not paths:
             rg = self.get_ranges()[0]
-            blocks.append((rg,{},{}))
+            paths.append([(self, rg, 0)])
 
-        return blocks
+        return paths
 
     def get_name(self):
         if self.name is None:
@@ -414,17 +427,21 @@ class Functor():
         jitdir = os.path.realpath("__jit__")
         os.makedirs(jitdir, exist_ok=True)
 
-        ctx = new_ctx()
-        ctx["stmt"].append(["func", self, args])
+        ctx = CFG(self)
+        ctx.append(["func", self, args])
         self.build_cfg(ctx)
-        ctx["stmt"].append(["endfunc"])
+        ctx.append(["endfunc"])
 
         cfile = os.path.join(jitdir, fname+".c")
         with open(cfile, "w") as f:
             gen_func(ctx, f)
 
         so_path = os.path.join(jitdir, f"{fname}_{self.id}.so")
-        subprocess.check_output(["cc", "-fPIC"] + cflags + ["-shared", "-o", so_path, cfile])
+        try:
+            subprocess.check_output(["cc", "-fPIC"] + cflags + ["-shared", "-o", so_path, cfile])
+        except:
+            print(open(cfile).read())
+            raise
 
         dll = ctypes.CDLL(so_path)
         f = getattr(dll, fname)

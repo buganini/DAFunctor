@@ -35,6 +35,7 @@ def test_func(test, f, *args, params=tuple(), **kwargs):
     if not np.array_equal(golden, cv):
         symbols.print()
         pp.pprint(symbols.build_cfg())
+        print(open(func.source).read())
         print("Golden", golden)
         print("JitEval", cv)
         raise ValueError("jit() mismatch")

@@ -3,95 +3,117 @@ from .typing import *
 
 intent_spaces = 4
 
-def gen_c_expr(expr, output, indent=0):
+def gen_c_expr(scope, expr, output, indent=0):
     if type(expr) in (str, int, float):
         return str(expr)
 
-    if expr[0] == "for":
+    if expr[0] == "for_shape":
         shape = expr[1]
+        scope_depth = expr[2]
+        idepth = expr[3]
         for i in range(len(shape)):
             output.write(" "*indent*intent_spaces)
-            output.write("{}for(int i{i}=0;i{i}<{n};i{i}++)\n".format(" "*i*2, i=i, n=shape[i]))
-        output.write(" "*indent*intent_spaces)
-        output.write("{\n")
-        return indent + 1
+            idx = gen_c_expr(scope, ["idx", i, scope_depth, idepth], output, indent=0)
+            output.write("{}for(int {idx}=0;{idx}<{n};{idx}++)\n".format(" "*i*2, idx=idx, n=shape[i]))
+        return indent
 
-    elif expr[0] == "endfor":
-        output.write(" "*(indent-1)*intent_spaces)
-        output.write("}\n")
-        return indent - 1
+    elif expr[0] == "for_scatter":
+        shape = expr[1]
+        scatters = expr[2]
+        scope_depth = expr[3]
+        idepth = expr[4]
+        for i,scatter in enumerate(scatters):
+            axis = scatter[0]
+            start = scatter[1]
+            num = scatter[2]
+            step = scatter[3]
+            end =  start + num * step
+            for d in range(len(shape)):
+                if d != axis:
+                    idx = gen_c_expr(scope, ["idx", d, scope_depth, idepth], output, indent=0)
+                    fidx = gen_c_expr(scope, ["idx", d, scope_depth-1, idepth], output, indent=0)
+                    output.write(" "*indent*intent_spaces)
+                    output.write(f"int {idx} = {fidx};\n")
+
+            offset = gen_c_expr(scope, ["idx", axis, scope_depth-1, idepth], output, indent=0)
+            idx = gen_c_expr(scope, ["idx", axis, scope_depth, idepth], output, indent=0)
+            output.write(" "*indent*intent_spaces)
+            output.write("{}for(int {idx}={start}+{offset};{idx}<{end}+{offset};{idx}+={step})\n".format(" "*i*2, idx=idx, start=start, end=end, step=step, offset=offset))
+        return indent
 
     elif expr[0] == "=":
         tensor = expr[1]
         value_expr = expr[2]
-        depth = expr[3]
+        idepth = expr[3]
+        scope_depth = expr[4]
         idx = []
         for i in range(len(tensor.shape)):
-            if depth:
-                didx = ["I{}_{}".format(i, depth)]
-            else:
-                didx = ["i{}".format(i)]
+            didx = [gen_c_expr(scope, ["idx", i, scope_depth, idepth], output, indent=0)]
             for j in range(i+1,len(tensor.shape)):
                 didx.append("{}".format(tensor.shape[j]))
             idx.append("*".join(didx))
         idx = " + ".join(idx)
-        output.write(" "*(indent+1)*intent_spaces)
-        output.write("{name}[{idx}] = ".format(name=tensor.name, idx=idx))
-        output.write(gen_c_expr(value_expr, output, indent=indent+1))
+        output.write(" "*(indent)*intent_spaces)
+        output.write("{name}[{idx}] = ".format(name=tensor.get_name(), idx=idx))
+        output.write(gen_c_expr(scope, value_expr, output, indent=indent+1))
         output.write(";\n")
         return indent
 
-    elif expr[0] == "idx":
-        if expr[2]==0:
-            return f"i{expr[1]}"
-        else:
-            return f"I{expr[1]}_{expr[2]}"
+    elif expr[0] == "idx": # axis, scope_depth, iexpr_depth
+        sn = list(expr[1:])
+        while sn and sn[-1] == 0:
+            sn.pop()
+        if not sn:
+            sn = [0]
+        return "i" + "_".join([str(x) for x in sn])
 
-    elif expr[0] == "let":
-        mapping = expr[1]
-        sub = expr[2]
-        defs = []
-        for m in mapping:
-            symbol = gen_c_expr(m[0], output, indent=0)
-            defs.append(symbol)
-            output.write("#define ")
-            output.write(symbol)
-            output.write(" ")
-            output.write("(")
-            output.write(gen_c_expr(m[1], output, indent=0))
-            output.write(")")
-            output.write("\n")
-        gen_c_expr(sub, output, indent=indent)
-        for s in defs[::-1]:
-            output.write("#undef ")
-            output.write(s)
-            output.write("\n")
+    elif expr[0] == "v":
+        return f"v{expr[1]}"
+
+    elif expr[0] == "scope":
+        scope = expr[1]
+        output.write(" "*indent*intent_spaces)
+        output.write("{\n")
+        indent += 1
+        for expr in scope.stmt:
+            indent = gen_c_expr(scope, expr, output, indent)
+        indent -= 1
+        output.write(" "*indent*intent_spaces)
+        output.write("}\n")
+        return indent
+
+    elif expr[0] == "val":
+        dtype = to_c_type(expr[1])
+        name = gen_c_expr(scope, expr[2], output, indent=0)
+        expr = gen_c_expr(scope, expr[3], output, indent=0)
+        output.write(" "*indent*intent_spaces)
+        output.write(f"{dtype} {name} = {expr};\n")
         return indent
 
     elif expr[0] == "ref":
-        a = gen_c_expr(expr[1], output, indent=0)
-        b = gen_c_expr(expr[2], output, indent=0)
+        a = gen_c_expr(scope, expr[1], output, indent=0)
+        b = gen_c_expr(scope, expr[2], output, indent=0)
         return f"{a}[{b}]"
 
     elif expr[0] == "+":
-        args = [gen_c_expr(e, output, indent=0) for e in expr[1]]
+        args = [gen_c_expr(scope, e, output, indent=0) for e in expr[1]]
         return "".join(["(", "+".join(args), ")"])
 
     elif expr[0] == "-":
-        args = [gen_c_expr(e, output, indent=0) for e in expr[1]]
+        args = [gen_c_expr(scope, e, output, indent=0) for e in expr[1]]
         return "".join(["(", "-".join(args), ")"])
 
     elif expr[0] == "*":
-        args = [gen_c_expr(e, output, indent=0) for e in expr[1]]
+        args = [gen_c_expr(scope, e, output, indent=0) for e in expr[1]]
         return "".join(["(", "*".join(args), ")"])
 
     elif expr[0] == "//":
         # XXX float args
-        args = [gen_c_expr(e, output, indent=0) for e in expr[1]]
+        args = [gen_c_expr(scope, e, output, indent=0) for e in expr[1]]
         return "".join(["(", "/".join(args), ")"])
 
     elif expr[0] == "%":
-        args = [gen_c_expr(e, output, indent=0) for e in expr[1]]
+        args = [gen_c_expr(scope, e, output, indent=0) for e in expr[1]]
         return "".join(["(", "%".join(args), ")"])
 
     elif expr[0] == "term":
@@ -123,19 +145,19 @@ def gen_func(ctx, output):
     output.write("#include <math.h>\n");
     output.write("\n")
 
-    if ctx["data"]:
+    if ctx.data:
         output.write("// Data\n");
-    for sym_name in ctx["data"]:
-        dtype, data = ctx["data"][sym_name]
+    for sym_name in ctx.data:
+        dtype, data = ctx.data[sym_name]
         array = False
         output.write("{dtype} {name}".format(dtype=to_c_type(dtype), name=sym_name));
         output.write("[] = {")
         output.write(",".join([str(x) for x in data]))
         output.write("};\n");
-    if ctx["data"]:
+    if ctx.data:
         output.write("\n");
 
     indent = 0
-    for expr in ctx["stmt"]:
-        indent = gen_c_expr(expr, output, indent)
+    for expr in ctx.stmt:
+        indent = gen_c_expr(ctx, expr, output, indent)
 

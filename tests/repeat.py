@@ -5,7 +5,7 @@ def f1(np):
 
 test_func("repeat_value", f1)
 
-def f2(np, axis):
+def f2(np, axis=None):
     return np.repeat(np.array([[1,2,3],[4,5,6]]), 3, axis=axis)
 
 test_func("repeat_axis_0", f2, 0)
