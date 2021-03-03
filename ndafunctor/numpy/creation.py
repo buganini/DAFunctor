@@ -1,4 +1,5 @@
 from ..functor import Functor, Data
+from .functor import NumpyFunctor
 from .manipulation import *
 
 def _shape(data):
@@ -44,7 +45,7 @@ def array(data):
         ]
         for i in range(len(shape))
     ]]
-    return Functor(
+    return NumpyFunctor(
         shape,
         dexpr = ["ref", ["d", dexpr]],
         data = Data(_flatten(data), "array"),
@@ -52,21 +53,21 @@ def array(data):
     )
 
 def zeros(shape):
-    return Functor(
+    return NumpyFunctor(
         shape,
         dexpr = 0,
         desc = "zeros"
     )
 
 def ones(shape):
-    return Functor(
+    return NumpyFunctor(
         shape,
         dexpr = 1,
         desc = "ones"
     )
 
 def full(shape, fill_value):
-    return Functor(
+    return NumpyFunctor(
         shape,
         dexpr = fill_value,
         desc = "full"
@@ -90,7 +91,7 @@ def arange(*args):
 
     data = [start,end,step]
     shape = [(end - start) // step]
-    return Functor(
+    return NumpyFunctor(
         shape,
         dexpr = ["+",["d0",["*",["i0","d2"]]]], # start + i * step
         data = data,
@@ -109,13 +110,13 @@ def raw_meshgrid(*args):
     # data[i0][i[i0+1]]
     subs = []
     for i,arg in enumerate(args):
-        if type(arg) is Functor:
+        if isinstance(arg, Functor):
             if len(arg.shape) == 1:
                 raise NotImplementedError()
             else:
                 raise ValueError("meshgrid only accept 1-D array inputs")
         else:
-            subs.append(Functor(
+            subs.append(NumpyFunctor(
                 shape[1:],
                 dexpr = ["ref",["d",f"i{i}"]], # data[i{i0+1}]]
                 data = Data(arg, "meshgrid"),
@@ -124,7 +125,7 @@ def raw_meshgrid(*args):
     iexpr = [0]
     for i in range(len(shape)-1):
         iexpr.append(f"i{i}")
-    return Functor(
+    return NumpyFunctor(
         shape,
         ranges = ranges,
         iexpr = iexpr,

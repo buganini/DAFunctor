@@ -81,7 +81,7 @@ class Expr():
         return ret
 
 def eval_expr(functor, expr, index=None):
-    if type(expr) is Functor:
+    if isinstance(expr, Functor):
         return expr.eval()
 
     if not type(expr) is Expr:
@@ -130,7 +130,7 @@ def eval_expr(functor, expr, index=None):
     else:
         raise NotImplementedError("Invalid token {}".format(op))
 
-    if type(ret) is Functor:
+    if isinstance(ret, Functor):
         ret = ret.eval()
 
     return ret
@@ -260,19 +260,6 @@ class Functor():
             d.append("subs={}".format(len(self.subs)))
         return "Functor({})".format(", ".join(d))
 
-    def __len__(self):
-        return self.shape[0]
-
-    def __getitem__(self, idx):
-        if idx < len(self):
-            regs = [self]
-            n = self.shape[1:]
-            f = ["&"]
-            offset = [idx]+[0]*(len(self.shape)-1)
-            return Functor(regs, n, f, offset=offset)
-        else:
-            raise IndexError()
-
     def print(self, indent=0, suffix=""):
         indent__num = 4
         print(" "*indent*indent__num, end="")
@@ -309,12 +296,6 @@ class Functor():
 
         for i,s in enumerate(self.subs or []):
             s.print(indent+1, suffix="[{}]".format(i))
-
-    def size(self):
-        sz = 1
-        for s in self.shape:
-            sz *= s
-        return sz
 
     def get_ranges(self):
         if self.ranges is None:

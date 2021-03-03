@@ -1,11 +1,12 @@
-from ..functor import Functor
+from ..functor import Functor, Data
+from .functor import NumpyFunctor
 from ..ast import strip as ast_strip
 import functools
 
 def transpose(functor, dims):
     iexpr = [f"i{axis}" for axis in dims]
     shape = [functor.shape[dims[i]] for i in range(len(functor.shape))]
-    return Functor(
+    return NumpyFunctor(
         shape,
         iexpr = iexpr,
         desc = f"transposed_{functor.desc}",
@@ -38,7 +39,7 @@ def reshape(a, shape):
                 ]
             ])
         )
-    return Functor(
+    return NumpyFunctor(
         shape,
         iexpr = iexpr,
         desc = f"reshape({shape})_{a.desc}",
@@ -57,7 +58,7 @@ def stack(array, axis=0):
         rgs = [(0,s,1) for s in shape]
         rgs[axis] = (i,1,1)
         ranges.append(rgs)
-    return Functor(
+    return NumpyFunctor(
         shape,
         ranges = ranges,
         iexpr = iexpr,
@@ -75,7 +76,7 @@ def concatenate(array, axis=0):
         rgs = [(0,s,1) for s in shape]
         rgs[axis] = (i*orig_shape,orig_shape,1)
         ranges.append(rgs)
-    return Functor(
+    return NumpyFunctor(
         shape,
         ranges = ranges,
         iexpr = iexpr,
@@ -88,7 +89,7 @@ def expand_dims(a, axis):
     iexpr.insert(axis, 0)
     shape = list(a.shape)
     shape.insert(axis, 1)
-    return Functor(
+    return NumpyFunctor(
         shape,
         iexpr = iexpr,
         desc = f"expand_dims_{axis}_{a.desc}",
@@ -96,7 +97,7 @@ def expand_dims(a, axis):
     )
 
 def repeat(a, repeats, axis=None):
-    if type(a) is Functor:
+    if isinstance(a, Functor):
         if axis is None:
             sz = functools.reduce(lambda x,y:x*y, a.shape)
             flt = reshape(a, [sz])
@@ -104,7 +105,7 @@ def repeat(a, repeats, axis=None):
             shape = [sz*repeats]
             iexpr = [["*", [f"i0", repeats]]]
             sexpr = [(0, 0, repeats, 1)]
-            return Functor(
+            return NumpyFunctor(
                 shape,
                 iexpr = iexpr,
                 sexpr = sexpr,
@@ -117,7 +118,7 @@ def repeat(a, repeats, axis=None):
             iexpr = [f"i{i}" for i in range(len(shape))]
             iexpr[axis] = ["*", [f"i{axis}", repeats]]
             sexpr = [(axis, 0, repeats, 1)]
-            return Functor(
+            return NumpyFunctor(
                 shape,
                 iexpr = iexpr,
                 sexpr = sexpr,
@@ -126,7 +127,7 @@ def repeat(a, repeats, axis=None):
             )
     else:
         shape = [repeats]
-        return Functor(
+        return NumpyFunctor(
             shape,
             desc = f"repeat_{repeats}",
             dexpr = a
