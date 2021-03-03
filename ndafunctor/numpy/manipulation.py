@@ -1,5 +1,5 @@
-from .functor import Functor
-from .ast import strip as ast_strip
+from ..functor import Functor
+from ..ast import strip as ast_strip
 
 def transpose(functor, dims):
     iexpr = [f"i{axis}" for axis in dims]

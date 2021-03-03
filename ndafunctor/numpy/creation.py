@@ -1,4 +1,4 @@
-from .functor import Functor, Data
+from ..functor import Functor, Data
 from .manipulation import *
 
 def _shape(data):
