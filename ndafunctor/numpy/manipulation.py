@@ -104,7 +104,7 @@ def repeat(a, repeats, axis=None):
 
             shape = [sz*repeats]
             iexpr = [["*", [f"i0", repeats]]]
-            sexpr = [(0, 0, repeats, 1)]
+            sexpr = (0, 0, repeats, 1)
             return NumpyFunctor(
                 shape,
                 iexpr = iexpr,
@@ -117,7 +117,7 @@ def repeat(a, repeats, axis=None):
             shape[axis] *= repeats
             iexpr = [f"i{i}" for i in range(len(shape))]
             iexpr[axis] = ["*", [f"i{axis}", repeats]]
-            sexpr = [(axis, 0, repeats, 1)]
+            sexpr = (axis, 0, repeats, 1)
             return NumpyFunctor(
                 shape,
                 iexpr = iexpr,

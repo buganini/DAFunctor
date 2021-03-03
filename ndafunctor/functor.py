@@ -315,14 +315,14 @@ class Functor():
                 for i,iexpr in enumerate(self.iexpr)
             ])
 
-    def eval_scatter(self, data, idx, scatters):
-        if scatters is None:
+    def eval_scatter(self, data, idx, scatter):
+        if scatter is None:
             return
-        for axis,start,num,step in scatters:
-            for i in range(num):
-                sidx = list(idx)
-                sidx[axis] += start + i*step
-                data[tuple(sidx)] = data[idx]
+        axis,start,num,step = scatter
+        for i in range(num):
+            sidx = list(idx)
+            sidx[axis] += start + i*step
+            data[tuple(sidx)] = data[idx]
 
     def eval(self):
         if self.eval_cached is None:

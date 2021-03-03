@@ -19,26 +19,25 @@ def gen_c_expr(scope, expr, output, indent=0):
 
     elif expr[0] == "for_scatter":
         shape = expr[1]
-        scatters = expr[2]
+        scatter = expr[2]
         scope_depth = expr[3]
         idepth = expr[4]
-        for i,scatter in enumerate(scatters):
-            axis = scatter[0]
-            start = scatter[1]
-            num = scatter[2]
-            step = scatter[3]
-            end =  start + num * step
-            for d in range(len(shape)):
-                if d != axis:
-                    idx = gen_c_expr(scope, ["idx", d, scope_depth, idepth], output, indent=0)
-                    fidx = gen_c_expr(scope, ["idx", d, scope_depth-1, idepth], output, indent=0)
-                    output.write(" "*indent*intent_spaces)
-                    output.write(f"int {idx} = {fidx};\n")
+        axis = scatter[0]
+        start = scatter[1]
+        num = scatter[2]
+        step = scatter[3]
+        end =  start + num * step
+        for d in range(len(shape)):
+            if d != axis:
+                idx = gen_c_expr(scope, ["idx", d, scope_depth, idepth], output, indent=0)
+                fidx = gen_c_expr(scope, ["idx", d, scope_depth-1, idepth], output, indent=0)
+                output.write(" "*indent*intent_spaces)
+                output.write(f"int {idx} = {fidx};\n")
 
-            offset = gen_c_expr(scope, ["idx", axis, scope_depth-1, idepth], output, indent=0)
-            idx = gen_c_expr(scope, ["idx", axis, scope_depth, idepth], output, indent=0)
-            output.write(" "*indent*intent_spaces)
-            output.write("{}for(int {idx}={start}+{offset};{idx}<{end}+{offset};{idx}+={step})\n".format(" "*i*2, idx=idx, start=start, end=end, step=step, offset=offset))
+        offset = gen_c_expr(scope, ["idx", axis, scope_depth-1, idepth], output, indent=0)
+        idx = gen_c_expr(scope, ["idx", axis, scope_depth, idepth], output, indent=0)
+        output.write(" "*indent*intent_spaces)
+        output.write("for(int {idx}={start}+{offset};{idx}<{end}+{offset};{idx}+={step})\n".format(idx=idx, start=start, end=end, step=step, offset=offset))
         return indent
 
     elif expr[0] == "=":
