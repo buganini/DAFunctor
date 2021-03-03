@@ -1,5 +1,6 @@
 from ..functor import Functor
 from ..ast import strip as ast_strip
+import functools
 
 def transpose(functor, dims):
     iexpr = [f"i{axis}" for axis in dims]
@@ -97,8 +98,19 @@ def expand_dims(a, axis):
 def repeat(a, repeats, axis=None):
     if type(a) is Functor:
         if axis is None:
-            # XXX
-            raise NotImplementedError("repeat(ndarray, axis=None) is not implemented")
+            sz = functools.reduce(lambda x,y:x*y, a.shape)
+            flt = reshape(a, [sz])
+
+            shape = [sz*repeats]
+            iexpr = [["*", [f"i0", repeats]]]
+            sexpr = [(0, 0, repeats, 1)]
+            return Functor(
+                shape,
+                iexpr = iexpr,
+                sexpr = sexpr,
+                desc = f"repeat_{repeats}",
+                subs = [flt]
+            )
         else:
             shape = list(a.shape)
             shape[axis] *= repeats

@@ -18,7 +18,7 @@
     * expand_dims
     * reshape
     * concatenate
-    * repeat (axis != None)
+    * repeat
 
 # Todo
 * Elementwise operations
@@ -29,7 +29,7 @@
 
 # Example
 ```
->>> import ndafunctor as nf
+>>> import ndafunctor.numpy as nf
 >>> s = nf.meshgrid([1,2],[3,4,5])
 >>> s.eval()
 array([[[1., 2.],
