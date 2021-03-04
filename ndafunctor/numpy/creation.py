@@ -103,7 +103,7 @@ def raw_meshgrid(*args):
     partitions = []
     for i in range(len(args)):
         shape.append(len(args[i]))
-        rgs = [(0,1,1)]
+        rgs = []
         for j in range(len(args)):
             rgs.append((0,len(args[j]),1))
         partitions.append(rgs)

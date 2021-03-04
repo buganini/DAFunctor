@@ -59,7 +59,7 @@ def stack(array, axis=0):
     shape.insert(axis, len(array))
     partitions = []
     for i in range(len(array)):
-        rgs = [(0,s,1) for s in shape]
+        rgs = [(0,s,1) for s in array[i].shape]
         partitions.append(rgs)
     return NumpyFunctor(
         shape,

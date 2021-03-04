@@ -328,7 +328,7 @@ class Functor():
             if self.partitions:
                 for sidx, rg in enumerate(self.partitions):
                     functor = self.subs[sidx]
-                    for idx in itertools.product(*[range(n) for n in functor.shape]):
+                    for idx in itertools.product(*[range(x[1]) for x in rg]):
                         pidx = self.eval_index(idx, sidx)
                         v = functor.eval()
                         try:
