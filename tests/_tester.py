@@ -22,7 +22,7 @@ def test_func(test, f, *args, params=tuple(), **kwargs):
         print("Golden", golden)
         print("Eval", ev)
         symbols.print()
-        raise ValueError("eval() mismatch")
+        raise ValueError(f"eval() mismatch: {test}")
 
     try:
         func = symbols.jit(*params)
@@ -38,6 +38,6 @@ def test_func(test, f, *args, params=tuple(), **kwargs):
         print(open(func.source).read())
         print("Golden", golden)
         print("JitEval", cv)
-        raise ValueError("jit() mismatch")
+        raise ValueError(f"jit() mismatch: {test}")
 
     print("OK", test)

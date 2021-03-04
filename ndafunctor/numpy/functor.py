@@ -12,14 +12,14 @@ class NumpyFunctor(Functor):
         elif isinstance(idx, int):
             if idx < len(self):
                 shape = self.shape[1:]
-                ranges = [(0,s,1) for s in shape]
-                ranges[0] = (idx,1,1)
+                partitions = [(0,s,1) for s in shape]
+                partitions[0] = (idx,1,1)
                 print("shape", shape, idx)
-                print("ranges", ranges)
+                print("partitions", partitions)
                 iexpr = [f"i{i}" for i in range(1,len(shape))]
                 return Functor(
                     shape,
-                    ranges = [ranges],
+                    partitions = [partitions],
                     iexpr = iexpr,
                     subs = [self],
                     desc = "{}[{}]".format(self.desc, idx)

@@ -10,6 +10,7 @@
 ## Value
 #  i{n} index on n-th axis
 #  d data value
+#  si index of sub-functors
 
 import os
 import re
@@ -80,7 +81,7 @@ class Expr():
                     ret.add(t)
         return ret
 
-def eval_expr(functor, expr, index=None):
+def eval_expr(functor, expr, index=None, sidx=None):
     if isinstance(expr, Functor):
         return expr.eval()
 
@@ -91,31 +92,33 @@ def eval_expr(functor, expr, index=None):
     if type(op) in (int, float):
         ret = op
     elif op == "+":
-        a = [eval_expr(functor, e, index) for e in expr]
+        a = [eval_expr(functor, e, index, sidx) for e in expr]
         ret = reduce(lambda x,y:x+y, a)
     elif op == "-":
-        a = [eval_expr(functor, e, index) for e in expr]
+        a = [eval_expr(functor, e, index, sidx) for e in expr]
         ret = reduce(lambda x,y:x-y, a)
     elif op == "*":
-        a = [eval_expr(functor, e, index) for e in expr]
+        a = [eval_expr(functor, e, index, sidx) for e in expr]
         ret = reduce(lambda x,y:x*y, a)
     elif op == "//":
-        a = [eval_expr(functor, e, index) for e in expr]
+        a = [eval_expr(functor, e, index, sidx) for e in expr]
         ret = reduce(lambda x,y:x//y, a)
     elif op == "/":
-        a = [eval_expr(functor, e, index) for e in expr]
+        a = [eval_expr(functor, e, index, sidx) for e in expr]
         ret = reduce(lambda x,y:x/y, a)
     elif op == "%":
-        a = [eval_expr(functor, e, index) for e in expr]
+        a = [eval_expr(functor, e, index, sidx) for e in expr]
         ret = reduce(lambda x,y:x%y, a)
     elif op == "ref":
-        ref_a = eval_expr(functor, expr[0], index)
-        ref_b = eval_expr(functor, expr[1], index)
+        ref_a = eval_expr(functor, expr[0], index, sidx)
+        ref_b = eval_expr(functor, expr[1], index, sidx)
         if type(ref_b) is list:
             ref_b = tuple(ref_b)
         # print("ref_a", ref_a)
         # print("ref_b", ref_b)
         ret = ref_a[ref_b]
+    elif op == "si":
+        return sidx
     elif op == "d":
         ret = functor.data
     elif re.match("-?[0-9]+", op):
@@ -127,6 +130,8 @@ def eval_expr(functor, expr, index=None):
         # print("op", op)
         # print("index", index)
         ret = index[int(op[1:])]
+    elif re.match("v[0-9]+", op):
+        return functor.subs[int(op[1:])][index]
     else:
         raise NotImplementedError("Invalid token {}".format(op))
 
@@ -144,19 +149,17 @@ def build_cfg(ctx, path):
             scope.append(["for_shape", [x[1] for x in rg], scope.depth + 1, idepth])
             scope = scope.enter()
 
-        if not functor.dexpr is None:
+        if functor.partitions:
             if functor.iexpr:
                 for d,iexpr in enumerate(functor.iexpr):
-                    iexpr = ["+", [iexpr + [rg[d][0]]]]
-                    scope.append(["val", "i", ["idx", d, scope.depth, idepth+1], build_ast(scope, Expr(iexpr), functor.subs[sidx].data, idepth)])
+                    scope.append(["val","i", ["idx", d, scope.depth, idepth+1], build_ast(scope, Expr(iexpr), sidx, functor.subs[sidx].data, idepth)])
                 idepth += 1
-            value = build_ast(scope, Expr(functor.dexpr), functor.data, depth)
         else:
             if functor.iexpr:
                 for d,iexpr in enumerate(functor.iexpr):
-                    iexpr = ["+", [iexpr,  rg[d][0]]]
-                    scope.append(["val","i", ["idx", d, scope.depth, idepth+1], build_ast(scope, Expr(iexpr), functor.subs[sidx].data, idepth)])
+                    scope.append(["val", "i", ["idx", d, scope.depth, idepth+1], build_ast(scope, Expr(iexpr), sidx, functor.subs[sidx].data, idepth)])
                 idepth += 1
+            value = build_ast(scope, Expr(functor.vexpr), sidx, functor.data, depth)
 
         output = False
 
@@ -170,19 +173,21 @@ def build_cfg(ctx, path):
         if final_out:
             scope.append(["=", functor, value, idepth, scope.depth])
 
-def build_ast(ctx, expr, data, depth):
+def build_ast(ctx, expr, sidx, data, depth):
     op = expr.op
     if type(op) in (int, float):
         return op
     elif op in ("+","-","*","//","/","%"):
-        args = [build_ast(ctx, e, data, depth) for e in expr]
+        args = [build_ast(ctx, e, sidx, data, depth) for e in expr]
         return [op, args]
     elif op == "ref":
-        ref_a = build_ast(ctx, expr[0], data, depth)
-        ref_b = build_ast(ctx, expr[1], data, depth)
+        ref_a = build_ast(ctx, expr[0], sidx, data, depth)
+        ref_b = build_ast(ctx, expr[1], sidx, data, depth)
         if type(ref_b) is list:
             ref_b = tuple(ref_b)
         return ["ref", ref_a, ref_b]
+    elif op == "si":
+        return sidx
     elif op == "d":
         name = data.get_name()
         ctx.data[name] = (data.get_type(), data)
@@ -217,17 +222,17 @@ class Data(list):
 
 class Functor():
     acc = 0
-    def __init__(self, shape, ranges=None, dtype=None, dexpr=None, iexpr=None, sexpr=None, data=None, subs=[], desc=None):
+    def __init__(self, shape, partitions=None, dtype=None, vexpr=None, iexpr=None, sexpr=None, data=None, subs=[], desc=None):
         # external perspective
         self.id = Functor.acc
         Functor.acc += 1
         self.shape = tuple(shape)
-        self.ranges = ranges
+        self.partitions = partitions
         self.dtype = dtype
         self.desc = desc
 
         # internal perspective
-        self.dexpr = dexpr # data expression, evaluate from index/data to value
+        self.vexpr = vexpr # value expression, evaluate from index/data to value
         self.iexpr = iexpr # index expression, evaluate from sub-functor index to index for this functor
         self.sexpr = sexpr # scatter expression, map one index to multiple indices
         if data: # static data
@@ -252,8 +257,8 @@ class Functor():
         d.append("id={}".format(self.id ))
         d.append("desc={}".format(self.desc))
         d.append("shape={}".format(self.shape))
-        if self.ranges:
-            d.append("ranges={}".format(self.ranges))
+        if self.partitions:
+            d.append("partitions={}".format(self.partitions))
         if self.iexpr:
             d.append("iexpr={}".format(self.iexpr))
         if self.subs:
@@ -271,13 +276,13 @@ class Functor():
         print(" "*(indent+1)*indent__num, end="")
         print("shape={}".format(self.shape))
 
-        if not self.ranges is None:
+        if not self.partitions is None:
             print(" "*(indent+1)*indent__num, end="")
-            print("ranges={}".format(self.ranges))
+            print("partitions={}".format(self.partitions))
 
-        if not self.dexpr is None:
+        if not self.vexpr is None:
             print(" "*(indent+1)*indent__num, end="")
-            print("dexpr={}".format(self.dexpr))
+            print("vexpr={}".format(self.vexpr))
 
         if self.iexpr:
             print(" "*(indent+1)*indent__num, end="")
@@ -297,21 +302,21 @@ class Functor():
         for i,s in enumerate(self.subs or []):
             s.print(indent+1, suffix="[{}]".format(i))
 
-    def get_ranges(self):
-        if self.ranges is None:
+    def get_partitions(self):
+        if self.partitions is None:
             return [[
                 (0,s,1)
                 for s in self.shape
             ]]
         else:
-            return self.ranges
+            return self.partitions
 
-    def eval_index(self, index):
+    def eval_index(self, index, sidx=None):
         if self.iexpr is None:
             return index
         else:
             return tuple([
-                eval_expr(self, Expr(iexpr, self, i), index)
+                eval_expr(self, Expr(iexpr, self, i), index, sidx)
                 for i,iexpr in enumerate(self.iexpr)
             ])
 
@@ -329,19 +334,11 @@ class Functor():
             import itertools
             import numpy
             data = numpy.zeros(self.shape)
-            if not self.dexpr is None:
-                rg = self.get_ranges()[0]
-                offset = [x[0] for x in rg]
-                for idx in itertools.product(*[range(base,base+num*step,step) for base,num,step in rg]):
-                    pidx = self.eval_index(idx)
-                    data[pidx] = eval_expr(self, Expr(self.dexpr, self), idx)
-                    self.eval_scatter(data, pidx, self.sexpr)
-            else:
-                for i, rg in enumerate(self.get_ranges()):
-                    functor = self.subs[i]
-                    offset = [x[0] for x in rg]
+            if self.partitions:
+                for sidx, rg in enumerate(self.get_partitions()):
+                    functor = self.subs[sidx]
                     for idx in itertools.product(*[range(n) for n in functor.shape]):
-                        pidx = tuple([sum(x) for x in zip(offset, self.eval_index(idx))])
+                        pidx = self.eval_index(idx, sidx)
                         v = functor.eval()
                         try:
                             data[pidx] = v[idx]
@@ -351,12 +348,20 @@ class Functor():
                             print("iexpr")
                             for e in self.iexpr:
                                 print(" ", e)
-                            print("idx",idx,"offset",offset)
+                            print("sidx",sidx)
+                            print("idx",idx)
                             print("pidx",pidx)
                             print("data", data.shape)
                             print("==================")
                             raise
                         self.eval_scatter(data, pidx, self.sexpr)
+            else:
+                rg = self.get_partitions()[0]
+                offset = [x[0] for x in rg]
+                for idx in itertools.product(*[range(base,base+num*step,step) for base,num,step in rg]):
+                    pidx = self.eval_index(idx)
+                    data[pidx] = eval_expr(self, Expr(self.vexpr, self), idx)
+                    self.eval_scatter(data, pidx, self.sexpr)
             self.eval_cached = data
         return self.eval_cached
 
@@ -370,18 +375,18 @@ class Functor():
 
     def build_blocks(self):
         paths = []
-        if not self.dexpr is None:
-            rg = self.get_ranges()[0]
-            for i in range(len(self.subs)):
+        if self.partitions:
+            for i,rg in enumerate(self.get_partitions()):
                 for b in self.subs[i].build_blocks():
                     paths.append(b + [(self, rg, i)])
         else:
-            for i,rg in enumerate(self.get_ranges()):
+            rg = self.get_partitions()[0]
+            for i in range(len(self.subs)):
                 for b in self.subs[i].build_blocks():
                     paths.append(b + [(self, rg, i)])
 
         if not paths:
-            rg = self.get_ranges()[0]
+            rg = self.get_partitions()[0]
             paths.append([(self, rg, 0)])
 
         return paths

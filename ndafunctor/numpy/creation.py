@@ -37,7 +37,7 @@ def array(data):
     shape = _shape(data)
     if shape is None:
         raise ValueError("Heterogeneous array is not supported")
-    dexpr = ["+", [
+    vexpr = ["+", [
         ["*",
             [f"i{i}"]
             +
@@ -47,7 +47,7 @@ def array(data):
     ]]
     return NumpyFunctor(
         shape,
-        dexpr = ["ref", ["d", dexpr]],
+        vexpr = ["ref", ["d", vexpr]],
         data = Data(_flatten(data), "array"),
         desc = f"array({str(shape)})"
     )
@@ -55,21 +55,21 @@ def array(data):
 def zeros(shape):
     return NumpyFunctor(
         shape,
-        dexpr = 0,
+        vexpr = 0,
         desc = "zeros"
     )
 
 def ones(shape):
     return NumpyFunctor(
         shape,
-        dexpr = 1,
+        vexpr = 1,
         desc = "ones"
     )
 
 def full(shape, fill_value):
     return NumpyFunctor(
         shape,
-        dexpr = fill_value,
+        vexpr = fill_value,
         desc = "full"
     )
 
@@ -93,20 +93,20 @@ def arange(*args):
     shape = [(end - start) // step]
     return NumpyFunctor(
         shape,
-        dexpr = ["+",["d0",["*",["i0","d2"]]]], # start + i * step
+        vexpr = ["+",["d0",["*",["i0","d2"]]]], # start + i * step
         data = data,
         desc = "arange"
     )
 
 def raw_meshgrid(*args):
     shape = [len(args)]
-    ranges = []
+    partitions = []
     for i in range(len(args)):
         shape.append(len(args[i]))
-        rgs = [(i,1,1)]
+        rgs = [(0,1,1)]
         for j in range(len(args)):
             rgs.append((0,len(args[j]),1))
-        ranges.append(rgs)
+        partitions.append(rgs)
     # data[i0][i[i0+1]]
     subs = []
     for i,arg in enumerate(args):
@@ -118,16 +118,16 @@ def raw_meshgrid(*args):
         else:
             subs.append(NumpyFunctor(
                 shape[1:],
-                dexpr = ["ref",["d",f"i{i}"]], # data[i{i0+1}]]
+                vexpr = ["ref",["d",f"i{i}"]], # data[i{i0+1}]]
                 data = Data(arg, "meshgrid"),
                 desc = f"raw_meshgrid[{i}]"
             ))
-    iexpr = [0]
+    iexpr = ["si"]
     for i in range(len(shape)-1):
         iexpr.append(f"i{i}")
     return NumpyFunctor(
         shape,
-        ranges = ranges,
+        partitions = partitions,
         iexpr = iexpr,
         subs = subs,
         desc = "raw_meshgrid"
