@@ -220,13 +220,52 @@ class Data(list):
     def get_type(self):
         return self.dtype
 
+class Shape():
+    def __init__(self, shape):
+        self.shape = self.ensure_schema(shape)
+
+    def __str__(self):
+        return str(self.shape)
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __len__(self):
+        return len(self.shape)
+
+    def __getitem__(self, idx):
+        s = [x[1] for x in self.shape]
+        return s.__getitem__(idx)
+
+    def ensure_schema(self, shape):
+        if type(shape) is Shape:
+            return tuple(shape.shape)
+
+        if all([type(x) is int for x in shape]):
+            return tuple([(0,x,1) for x in shape])
+
+        valid = True
+        sh = []
+        for x in shape:
+            if type(x) is int:
+                sh.append((0,x,1))
+            elif len(x) == 3 and all([type(e) is int for e in x]):
+                sh.append(tuple(x))
+            else:
+                valid = False
+                break
+        if valid:
+            return tuple(sh)
+
+        raise ValueError(f"Invalid shape {shape}")
+
 class Functor():
     acc = 0
     def __init__(self, shape, partitions=None, dtype=None, vexpr=None, iexpr=None, sexpr=None, data=None, subs=[], desc=None):
         # external perspective
         self.id = Functor.acc
         Functor.acc += 1
-        self.shape = tuple(shape)
+        self.shape = Shape(shape)
         self.partitions = partitions
         self.dtype = dtype
         self.desc = desc
@@ -303,13 +342,21 @@ class Functor():
             s.print(indent+1, suffix="[{}]".format(i))
 
     def eval_index(self, index, sidx=None):
+        fidx = None
         if self.iexpr is None:
-            return index
+            fidx = index
         else:
-            return tuple([
+            fidx = tuple([
                 eval_expr(self, Expr(iexpr, self, i), index, sidx)
                 for i,iexpr in enumerate(self.iexpr)
             ])
+        fidx = [(f-s[0]) for f,s in zip(fidx,self.shape.shape)]
+        if not all([(f % s[2])==0 for f,s in zip(fidx,self.shape.shape)]):
+            return None
+        fidx = [(f//s[2]) for f,s in zip(fidx,self.shape.shape)]
+        if not all([(f < s[1]) for f,s in zip(fidx,self.shape.shape)]):
+            return None
+        return tuple(fidx)
 
     def eval_scatter(self, data, idx, scatter):
         if scatter is None:
@@ -330,6 +377,8 @@ class Functor():
                     functor = self.subs[sidx]
                     for idx in itertools.product(*[range(x[1]) for x in rg]):
                         pidx = self.eval_index(idx, sidx)
+                        if pidx is None:
+                            continue
                         v = functor.eval()
                         try:
                             data[pidx] = v[idx]
@@ -342,7 +391,7 @@ class Functor():
                             print("sidx",sidx)
                             print("idx",idx)
                             print("pidx",pidx)
-                            print("data", data.shape)
+                            print("data.shape", data.shape)
                             print("==================")
                             raise
                         self.eval_scatter(data, pidx, self.sexpr)
@@ -350,6 +399,8 @@ class Functor():
                 rg = [(0,s,1) for s in self.shape]
                 for idx in itertools.product(*[range(base,base+num*step,step) for base,num,step in rg]):
                     pidx = self.eval_index(idx)
+                    if pidx is None:
+                        continue
                     data[pidx] = eval_expr(self, Expr(self.vexpr, self), idx)
                     self.eval_scatter(data, pidx, self.sexpr)
             self.eval_cached = data
