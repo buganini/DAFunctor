@@ -302,15 +302,6 @@ class Functor():
         for i,s in enumerate(self.subs or []):
             s.print(indent+1, suffix="[{}]".format(i))
 
-    def get_partitions(self):
-        if self.partitions is None:
-            return [[
-                (0,s,1)
-                for s in self.shape
-            ]]
-        else:
-            return self.partitions
-
     def eval_index(self, index, sidx=None):
         if self.iexpr is None:
             return index
@@ -335,7 +326,7 @@ class Functor():
             import numpy
             data = numpy.zeros(self.shape)
             if self.partitions:
-                for sidx, rg in enumerate(self.get_partitions()):
+                for sidx, rg in enumerate(self.partitions):
                     functor = self.subs[sidx]
                     for idx in itertools.product(*[range(n) for n in functor.shape]):
                         pidx = self.eval_index(idx, sidx)
@@ -356,8 +347,7 @@ class Functor():
                             raise
                         self.eval_scatter(data, pidx, self.sexpr)
             else:
-                rg = self.get_partitions()[0]
-                offset = [x[0] for x in rg]
+                rg = [(0,s,1) for s in self.shape]
                 for idx in itertools.product(*[range(base,base+num*step,step) for base,num,step in rg]):
                     pidx = self.eval_index(idx)
                     data[pidx] = eval_expr(self, Expr(self.vexpr, self), idx)
@@ -376,17 +366,17 @@ class Functor():
     def build_blocks(self):
         paths = []
         if self.partitions:
-            for i,rg in enumerate(self.get_partitions()):
+            for i,rg in enumerate(self.partitions):
                 for b in self.subs[i].build_blocks():
                     paths.append(b + [(self, rg, i)])
         else:
-            rg = self.get_partitions()[0]
+            rg = [(0,s,1) for s in self.shape]
             for i in range(len(self.subs)):
                 for b in self.subs[i].build_blocks():
                     paths.append(b + [(self, rg, i)])
 
         if not paths:
-            rg = self.get_partitions()[0]
+            rg = [(0,s,1) for s in self.shape]
             paths.append([(self, rg, 0)])
 
         return paths
