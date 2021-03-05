@@ -1,4 +1,4 @@
-from _tester import *
+from tester_numpy import *
 
 def f1(np):
     r = np.meshgrid([1,2],[3,4,5])

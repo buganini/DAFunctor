@@ -1,4 +1,4 @@
-from _tester import *
+from tester_numpy import *
 
 def f(np):
     return np.expand_dims(np.arange(1,6), axis=1)

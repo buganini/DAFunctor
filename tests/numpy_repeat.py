@@ -1,4 +1,4 @@
-from _tester import *
+from tester_numpy import *
 
 def f1(np):
     return np.repeat(2, 3)

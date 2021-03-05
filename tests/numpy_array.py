@@ -1,4 +1,4 @@
-from _tester import *
+from tester_numpy import *
 
 def f(np):
     a = [[[1],[2],[3]],[[4],[5],[6]]]

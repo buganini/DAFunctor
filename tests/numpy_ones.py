@@ -1,4 +1,4 @@
-from _tester import *
+from tester_numpy import *
 
 def f(np):
     return np.ones((2,3,4))

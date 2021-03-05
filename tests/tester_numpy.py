@@ -22,6 +22,7 @@ def test_func(test, f, *args, params=tuple(), **kwargs):
         print("Golden", golden)
         print("Eval", ev)
         symbols.print()
+        print(f"\x1b[1;31meval() mismatch\x1b[m: {test}")
         raise ValueError(f"eval() mismatch: {test}")
 
     try:
@@ -38,6 +39,16 @@ def test_func(test, f, *args, params=tuple(), **kwargs):
         print(open(func.source).read())
         print("Golden", golden)
         print("JitEval", cv)
+        print(f"\x1b[1;31mjit() mismatch\x1b[m: {test}")
         raise ValueError(f"jit() mismatch: {test}")
 
-    print("OK", test)
+    print("\x1b[1;32mOK\x1b[m", test)
+
+if __name__=="__main__":
+    import importlib
+    for fn in os.listdir(os.path.dirname(os.path.abspath(__file__))):
+        if fn.startswith("numpy_"):
+            try:
+                importlib.import_module(os.path.splitext(fn)[0])
+            except:
+                pass
