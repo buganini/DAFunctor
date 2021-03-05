@@ -10,13 +10,18 @@ pp = pprint.PrettyPrinter()
 def test_func(test, f, *args, params=tuple(), **kwargs):
     golden = f(np, *args, **kwargs)
 
-    symbols = f(nf, *args, **kwargs)
-    symbols.name = test
+    try:
+        symbols = f(nf, *args, **kwargs)
+        symbols.name = test
+    except:
+        print(f"\x1b[1;31mconstruct failed\x1b[m: {test}")
+        raise
 
     try:
         ev = symbols.eval()
     except:
         symbols.print()
+        print(f"\x1b[1;31meval failed\x1b[m: {test}")
         raise
     if not np.array_equal(golden, ev):
         print("Golden", golden)
@@ -30,6 +35,7 @@ def test_func(test, f, *args, params=tuple(), **kwargs):
     except:
         symbols.print()
         pp.pprint(symbols.build_cfg())
+        print(f"\x1b[1;31mjit failed\x1b[m: {test}")
         raise
 
     cv = func(*params)
@@ -46,7 +52,7 @@ def test_func(test, f, *args, params=tuple(), **kwargs):
 
 if __name__=="__main__":
     import importlib
-    for fn in os.listdir(os.path.dirname(os.path.abspath(__file__))):
+    for fn in sorted(os.listdir(os.path.dirname(os.path.abspath(__file__)))):
         if fn.startswith("numpy_"):
             try:
                 importlib.import_module(os.path.splitext(fn)[0])
