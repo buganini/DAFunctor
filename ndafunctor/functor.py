@@ -575,7 +575,7 @@ class Buffer(Functor):
         l = len(data)
         esz = struct.Struct(to_struct_type(dtype)).size
         if l % esz != 0:
-            raise ValueError(f"Buffer size {l} cannot be devided by data size {esz}")
+            raise ValueError(f"Buffer size {l} must be multiple of data size {esz}")
         super().__init__(
             shape=[l//esz],
             dtype = dtype,
