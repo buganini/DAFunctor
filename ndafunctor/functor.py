@@ -133,7 +133,12 @@ def eval_expr(functor, expr, index=None, sidx=None):
         # print("functor", functor)
         # print("op", op)
         # print("index", index)
-        ret = index[int(op[1:])]
+        idx = int(op[1:])
+        try:
+            ret = index[idx]
+        except:
+            print(f"#{functor.id} {op}: {index}[{idx}]")
+            raise
     elif re.match("v[0-9]+", op):
         return functor.subs[int(op[1:])][index]
     else:
@@ -226,10 +231,12 @@ def tailor_shape(paths):
 
             idx = pidx
 
-            for depth, (functor, rg, sidx) in enumerate(path[1:]):
+            for functor, rg, sidx in path[1:]:
                 if functor.partitions:
                     sfunctor = functor.subs[sidx]
                     srg = functor.partitions[sidx]
+                    if len(idx) != len(srg):
+                        raise AssertionError(f"Dimension mismatch {idx} {srg}")
                     if not all([i>=r[0] for i,r in zip(idx, srg)]):
                         in_range = False
                         break
@@ -239,11 +246,6 @@ def tailor_shape(paths):
                     if not all([(i-r[0]) % r[2] == 0 for i,r in zip(idx, srg)]):
                         in_range = False
                         break
-                    pidx = sfunctor.eval_index(idx, sidx)
-                    if pidx is None:
-                        in_range = False
-                        break
-                    idx = pidx
 
                 pidx = functor.eval_index(idx, sidx)
 
@@ -483,18 +485,18 @@ class Functor():
 
     def build_blocks(self):
         paths = []
+        rg = self.shape.shape
+
         if self.partitions:
-            for i,rg in enumerate(self.partitions):
+            for i,_ in enumerate(self.partitions):
                 for b in self.subs[i].build_blocks():
                     paths.append(b + [[self, rg, i]])
         else:
-            rg = self.shape.shape
             for i in range(len(self.subs)):
                 for b in self.subs[i].build_blocks():
                     paths.append(b + [[self, rg, i]])
 
         if not paths:
-            rg = self.shape.shape
             paths.append([[self, rg, 0]])
 
         return paths

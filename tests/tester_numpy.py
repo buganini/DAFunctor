@@ -38,14 +38,20 @@ def test_func(test, f, *args, params=tuple(), **kwargs):
         func = symbols.jit(*params)
     except:
         symbols.print()
-        pp.pprint(symbols.build_cfg())
+        try:
+            pp.pprint(symbols.build_cfg())
+        except:
+            print("Unable to build CFG")
         print(f"\x1b[1;31mjit failed\x1b[m: {test}")
         raise
 
     cv = func(*params)
     if not np.array_equal(golden, cv):
         symbols.print()
-        pp.pprint(symbols.build_cfg())
+        try:
+            pp.pprint(symbols.build_cfg())
+        except:
+            print("Unable to build CFG")
         print(open(func.source).read())
         print("Golden", golden)
         print("JitEval", cv)

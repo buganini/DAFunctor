@@ -37,14 +37,14 @@ def array(data):
     shape = _shape(data)
     if shape is None:
         raise ValueError("Heterogeneous array is not supported")
-    vexpr = ["+", [
+    vexpr = ast_strip(["+", [
         ["*",
             [f"i{i}"]
             +
             [shape[j] for j in range(i+1, len(shape))]
         ]
         for i in range(len(shape))
-    ]]
+    ]])
     return NumpyFunctor(
         shape,
         vexpr = ["ref", ["d", vexpr]],
