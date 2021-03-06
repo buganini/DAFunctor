@@ -113,3 +113,9 @@ void gen_tensor3(float * tensor3)
 }
 
 ```
+
+# To be investigated:
+* CUDA
+* OpenMP
+* LLIR
+* Rust
