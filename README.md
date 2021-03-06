@@ -1,5 +1,6 @@
 # Notice
 * Still in pre-alpha development
+* Requires Python 3.6+
 * Runtime axis operations are not supported by design, such as:
     * Dynamic shape
     * Dynamic transpose
@@ -124,3 +125,8 @@ void gen_tensor3(float * tensor3)
 * OpenMP
 * LLIR
 * Rust
+
+# Testing
+```
+python3 tests/tester_numpy.py
+```
