@@ -12,6 +12,7 @@
     * full
     * arange
     * meshgrid (xy)
+    * frombuffer
 * manipulation
     * transpose
     * stack
@@ -26,7 +27,6 @@
 # Todo
 * elementwise operations (with value)
 * elementwise operations (with NDArray)
-* buffer wrapping
 * slicing
     * [m:n,s]
     * [m:n,p:q]

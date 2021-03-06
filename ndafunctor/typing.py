@@ -31,6 +31,13 @@ def to_c_type(t):
     }
     return tm.get(type_normalize(t), t)
 
+def to_struct_type(t):
+    tm = {
+        "i": "i",
+        "f": "f"
+    }
+    return tm.get(type_normalize(t), t)
+
 def to_numpy_type(t):
     import numpy
     tm = {

@@ -45,7 +45,11 @@ def test_func(test, f, *args, params=tuple(), **kwargs):
         print(f"\x1b[1;31mjit failed\x1b[m: {test}")
         raise
 
-    cv = func(*params)
+    try:
+        cv = func(*args)
+    except:
+        print(f"\x1b[1;31mjit function invocation failed\x1b[m: {test}")
+
     if not np.array_equal(golden, cv):
         symbols.print()
         try:

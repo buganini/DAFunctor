@@ -141,6 +141,12 @@ def eval_expr(functor, expr, index=None, sidx=None):
             raise
     elif re.match("v[0-9]+", op):
         return functor.subs[int(op[1:])][index]
+    elif op  == "buf":
+        import struct
+        if functor.buffer is None:
+            raise AssertionError(f"Reference unset buffer of {functor}")
+        buf_idx = eval_expr(functor, expr[0], index, sidx)
+        return struct.unpack(to_struct_type(functor.dtype)*functor.shape[0], functor.buffer)[buf_idx]
     else:
         raise NotImplementedError("Invalid token {}".format(op))
 
@@ -161,14 +167,14 @@ def build_cfg(ctx, path):
         if functor.partitions:
             if functor.iexpr:
                 for d,iexpr in enumerate(functor.iexpr):
-                    scope.append(["val","i", ["idx", d, scope.depth, idepth+1], build_ast(scope, Expr(iexpr), sidx, functor.subs[sidx].data, idepth)])
+                    scope.append(["val","i", ["idx", d, scope.depth, idepth+1], build_ast(scope, Expr(iexpr), sidx, functor.subs[sidx], idepth)])
                 idepth += 1
         else:
             if functor.iexpr:
                 for d,iexpr in enumerate(functor.iexpr):
-                    scope.append(["val", "i", ["idx", d, scope.depth, idepth+1], build_ast(scope, Expr(iexpr), sidx, functor.subs[sidx].data, idepth)])
+                    scope.append(["val", "i", ["idx", d, scope.depth, idepth+1], build_ast(scope, Expr(iexpr), sidx, functor.subs[sidx], idepth)])
                 idepth += 1
-            value = build_ast(scope, Expr(functor.vexpr), sidx, functor.data, depth)
+            value = build_ast(scope, Expr(functor.vexpr), sidx, functor, depth)
 
         output = False
 
@@ -182,32 +188,35 @@ def build_cfg(ctx, path):
         if final_out:
             scope.append(["=", functor, value, idepth, scope.depth])
 
-def build_ast(ctx, expr, sidx, data, depth):
+def build_ast(ctx, expr, sidx, functor, depth):
     op = expr.op
     if type(op) in (int, float):
         return op
     elif op in ("+","-","*","//","/","%"):
-        args = [build_ast(ctx, e, sidx, data, depth) for e in expr]
+        args = [build_ast(ctx, e, sidx, functor, depth) for e in expr]
         return [op, args]
     elif op == "ref":
-        ref_a = build_ast(ctx, expr[0], sidx, data, depth)
-        ref_b = build_ast(ctx, expr[1], sidx, data, depth)
+        ref_a = build_ast(ctx, expr[0], sidx, functor, depth)
+        ref_b = build_ast(ctx, expr[1], sidx, functor, depth)
         if type(ref_b) is list:
             ref_b = tuple(ref_b)
         return ["ref", ref_a, ref_b]
     elif op == "si":
         return sidx
     elif op == "d":
-        name = data.get_name()
-        ctx.data[name] = (data.get_type(), data)
+        name = functor.data.get_name()
+        ctx.data[name] = (functor.data.get_type(), functor.data)
         return name
     elif re.match("-?[0-9]+", op):
         return ["term",op]
     elif re.match("d[0-9]+", op):
         i = int(op[1:])
-        return ["term", data[i]]
+        return ["term", functor.data[i]]
     elif re.match("i[0-9]+", op):
         return ["idx", int(op[1:]), ctx.depth, depth]
+    elif op == "buf":
+        buf_idx = build_ast(ctx, expr[0], sidx, functor, depth)
+        return ["ref", functor.name, buf_idx]
     else:
         raise NotImplementedError("Invalid token {}".format(op))
 
@@ -327,7 +336,7 @@ class Shape():
 
 class Functor():
     acc = 0
-    def __init__(self, shape, partitions=None, dtype=None, vexpr=None, iexpr=None, sexpr=None, data=None, subs=[], desc=None):
+    def __init__(self, shape, partitions=None, dtype=None, vexpr=None, iexpr=None, sexpr=None, data=None, subs=[], desc=None, name=None, buffer=None):
         # external perspective
         self.id = Functor.acc
         Functor.acc += 1
@@ -335,6 +344,8 @@ class Functor():
         self.partitions = partitions
         self.dtype = dtype
         self.desc = desc
+        self.name = name
+        self.buffer = buffer
 
         # internal perspective
         self.vexpr = vexpr # value expression, evaluate from index/data to value
@@ -350,7 +361,6 @@ class Functor():
         self.subs = subs # sub functors
 
         # runtime
-        self.name = None
         self.generated = False
         self.eval_cached = None
 
@@ -373,7 +383,7 @@ class Functor():
     def print(self, indent=0, suffix=""):
         indent__num = 4
         print(" "*indent*indent__num, end="")
-        print("Functor{}: #{}".format(suffix, self.id))
+        print("Functor{}: #{} {}".format(suffix, self.id, self.name or ""))
 
         print(" "*(indent+1)*indent__num, end="")
         print("{}".format(self.desc))
@@ -542,10 +552,35 @@ class Functor():
         dll = ctypes.CDLL(so_path)
         f = getattr(dll, fname)
         def func(*args):
-            args = [x.ctypes.data_as(ctypes.c_void_p) for x in args]
+            dargs = []
+            for x in args:
+                if isinstance(x, Functor):
+                    dargs.append(ctypes.cast(x.buffer, ctypes.c_void_p))
+                elif isinstance(x, numpy.ndarray):
+                    dargs.append(x.ctypes.data_as(ctypes.c_void_p))
+                elif type(x) in (int, float):
+                    dargs.append(x)
+                else:
+                    raise ValueError(f"Unknown data type {type(x)}")
             ret = numpy.zeros(self.shape, dtype=to_numpy_type(self.get_type()))
             pointer = ret.ctypes.data_as(ctypes.c_void_p)
-            f(pointer, *args)
+            f(pointer, *dargs)
             return ret
         func.source = cfile
         return func
+
+class Buffer(Functor):
+    def __init__(self, name, dtype, data):
+        import struct
+        l = len(data)
+        esz = struct.Struct(to_struct_type(dtype)).size
+        if l % esz != 0:
+            raise ValueError(f"Buffer size {l} cannot be devided by data size {esz}")
+        super().__init__(
+            shape=[l//esz],
+            dtype = dtype,
+            vexpr = ["buf", ["i0"]],
+            buffer = data,
+            name = name,
+            desc = f"buffer_{name}"
+        )

@@ -1,4 +1,5 @@
-from ..functor import Functor, Data
+from ..functor import Functor, Data, Buffer
+from ..typing import *
 from .functor import NumpyFunctor
 from .manipulation import *
 
@@ -140,3 +141,9 @@ def meshgrid(*args):
         return transpose(raw_meshgrid(*args), d)
     else:
         return raw_meshgrid(*args)
+
+def frombuffer(buffer, dtype=None):
+    if isinstance(buffer, Buffer):
+        return buffer
+
+    return Buffer(None, dtype, buffer)
