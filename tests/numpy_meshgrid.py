@@ -1,9 +1,7 @@
 from tester_numpy import *
 
 def f1(np):
-    r = np.meshgrid([1,2],[3,4,5])
-    if type(r) is list:
-        r = np.array(r)
+    r = np.array(np.meshgrid([1,2],[3,4,5]))
     return r
 
 test_func("meshgrid_data", f1)

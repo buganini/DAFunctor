@@ -399,6 +399,10 @@ class Functor():
             print(" "*(indent+1)*indent__num, end="")
             print("vexpr={}".format(self.vexpr))
 
+        if not self.sexpr is None:
+            print(" "*(indent+1)*indent__num, end="")
+            print("sexpr={}".format(self.sexpr))
+
         if self.iexpr:
             print(" "*(indent+1)*indent__num, end="")
             print("iexpr=[".format(self.iexpr))
@@ -436,14 +440,17 @@ class Functor():
             return None
         return tuple(fidx)
 
-    def eval_scatter(self, data, idx, scatter):
-        if scatter is None:
-            return
+    def eval_scatter(self, data, idx, scatter, value):
+        import numpy
         axis,start,num,step = scatter
         for i in range(num):
             sidx = list(idx)
             sidx[axis] += start + i*step
-            data[tuple(sidx)] = data[idx]
+            try:
+                data[tuple(sidx)] = value
+            except:
+                print(f"#{self.id} {scatter}")
+                raise
 
     def eval(self):
         if self.eval_cached is None:
@@ -457,29 +464,34 @@ class Functor():
                         if pidx is None:
                             continue
                         v = functor.eval()
-                        try:
-                            data[pidx] = v[idx]
-                        except:
-                            print("===== DEBUG ======")
-                            print("Sub-Functor", functor)
-                            print("iexpr")
-                            for e in self.iexpr:
-                                print(" ", e)
-                            print("sidx",sidx)
-                            print("idx",idx)
-                            print("pidx",pidx)
-                            print("data.shape", data.shape)
-                            print("==================")
-                            raise
-                        self.eval_scatter(data, pidx, self.sexpr)
+                        if self.sexpr is None:
+                            try:
+                                data[pidx] = v[idx]
+                            except:
+                                print("===== DEBUG ======")
+                                print("Sub-Functor", functor)
+                                print("iexpr")
+                                for e in self.iexpr:
+                                    print(" ", e)
+                                print("sidx",sidx)
+                                print("idx",idx)
+                                print("pidx",pidx)
+                                print("data.shape", data.shape)
+                                print("==================")
+                                raise
+                        else:
+                            self.eval_scatter(data, pidx, self.sexpr, v[idx])
             else:
                 rg = [(0,s,1) for s in self.shape]
                 for idx in ranger(rg):
                     pidx = self.eval_index(idx)
                     if pidx is None:
                         continue
-                    data[pidx] = eval_expr(self, Expr(self.vexpr, self), idx)
-                    self.eval_scatter(data, pidx, self.sexpr)
+                    v = eval_expr(self, Expr(self.vexpr, self), idx)
+                    if self.sexpr is None:
+                        data[pidx] = v
+                    else:
+                        self.eval_scatter(data, pidx, self.sexpr, v)
             self.eval_cached = data
         return self.eval_cached
 

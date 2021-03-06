@@ -35,6 +35,8 @@ def _flatten(data):
     return ret
 
 def array(data):
+    if isinstance(data, Functor):
+        return data
     shape = _shape(data)
     if shape is None:
         raise ValueError("Heterogeneous array is not supported")
