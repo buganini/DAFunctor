@@ -19,6 +19,10 @@ from .gen_c import *
 from .typing import *
 from collections import OrderedDict
 
+def ranger(rg):
+    import itertools
+    return itertools.product(*[range(base,base+num*step,step) for base,num,step in rg])
+
 class CFG():
     def __init__(self, target, parent=None, data=None):
         self.target = target
@@ -146,7 +150,7 @@ def build_cfg(ctx, path):
     idepth = 0
     for depth, (functor, rg, sidx) in enumerate(path):
         if depth == 0:
-            scope.append(["for_shape", [x[1] for x in rg], scope.depth + 1, idepth])
+            scope.append(["for_shape", rg, scope.depth + 1, idepth])
             scope = scope.enter()
 
         if functor.partitions:
@@ -201,6 +205,66 @@ def build_ast(ctx, expr, sidx, data, depth):
         return ["idx", int(op[1:]), ctx.depth, depth]
     else:
         raise NotImplementedError("Invalid token {}".format(op))
+
+def tailor_shape(paths):
+    ret = []
+    for path in paths:
+        bfunctor, brg, bsidx = path[0]
+        vs = [set() for i in range(len(bfunctor.shape))]
+
+        for idx in ranger(brg):
+            cidx = idx
+            in_range = True
+
+            if bfunctor.partitions:
+                raise ValueError(f"Partitioned root functor {bfunctor}")
+            else:
+                pidx = bfunctor.eval_index(idx)
+
+            if pidx is None:
+                continue
+
+            idx = pidx
+
+            for depth, (functor, rg, sidx) in enumerate(path[1:]):
+                if functor.partitions:
+                    sfunctor = functor.subs[sidx]
+                    srg = functor.partitions[sidx]
+                    if not all([i>=r[0] for i,r in zip(idx, srg)]):
+                        in_range = False
+                        break
+                    if not all([i<r[0]+r[1]*r[2] for i,r in zip(idx, srg)]):
+                        in_range = False
+                        break
+                    if not all([(i-r[0]) % r[2] == 0 for i,r in zip(idx, srg)]):
+                        in_range = False
+                        break
+                    pidx = sfunctor.eval_index(idx, sidx)
+                    if pidx is None:
+                        in_range = False
+                        break
+                    idx = pidx
+
+                pidx = functor.eval_index(idx, sidx)
+
+                if pidx is None:
+                    in_range = False
+                    break
+
+                idx = pidx
+
+            if in_range:
+                for i,c in enumerate(cidx):
+                    vs[i].add(c)
+
+        # slices generation
+        # TODO: handle step > 1
+        num = [len(v) for v in vs]
+        if all([n > 0 for n in num]):
+            base = [min(v) for v in vs]
+            path[0][1] = [(b,n,1) for b,n in zip(base, num)]
+            ret.append(path)
+    return ret
 
 class Data(list):
     acc = 0
@@ -351,6 +415,8 @@ class Functor():
                 for i,iexpr in enumerate(self.iexpr)
             ])
         fidx = [(f-s[0]) for f,s in zip(fidx,self.shape.shape)]
+        if not all([(f >= 0) for f,s in zip(fidx,self.shape.shape)]):
+            return None
         if not all([(f % s[2])==0 for f,s in zip(fidx,self.shape.shape)]):
             return None
         fidx = [(f//s[2]) for f,s in zip(fidx,self.shape.shape)]
@@ -369,13 +435,12 @@ class Functor():
 
     def eval(self):
         if self.eval_cached is None:
-            import itertools
             import numpy
             data = numpy.zeros(self.shape)
             if self.partitions:
                 for sidx, rg in enumerate(self.partitions):
                     functor = self.subs[sidx]
-                    for idx in itertools.product(*[range(x[1]) for x in rg]):
+                    for idx in ranger(rg):
                         pidx = self.eval_index(idx, sidx)
                         if pidx is None:
                             continue
@@ -397,7 +462,7 @@ class Functor():
                         self.eval_scatter(data, pidx, self.sexpr)
             else:
                 rg = [(0,s,1) for s in self.shape]
-                for idx in itertools.product(*[range(base,base+num*step,step) for base,num,step in rg]):
+                for idx in ranger(rg):
                     pidx = self.eval_index(idx)
                     if pidx is None:
                         continue
@@ -410,7 +475,9 @@ class Functor():
         if ctx is None:
             ctx = CFG(self)
 
-        for path in self.build_blocks():
+        paths = self.build_blocks()
+        paths = tailor_shape(paths)
+        for path in paths:
             build_cfg(ctx, path)
         return ctx
 
@@ -419,16 +486,16 @@ class Functor():
         if self.partitions:
             for i,rg in enumerate(self.partitions):
                 for b in self.subs[i].build_blocks():
-                    paths.append(b + [(self, rg, i)])
+                    paths.append(b + [[self, rg, i]])
         else:
-            rg = [(0,s,1) for s in self.shape]
+            rg = self.shape.shape
             for i in range(len(self.subs)):
                 for b in self.subs[i].build_blocks():
-                    paths.append(b + [(self, rg, i)])
+                    paths.append(b + [[self, rg, i]])
 
         if not paths:
-            rg = [(0,s,1) for s in self.shape]
-            paths.append([(self, rg, 0)])
+            rg = self.shape.shape
+            paths.append([[self, rg, 0]])
 
         return paths
 

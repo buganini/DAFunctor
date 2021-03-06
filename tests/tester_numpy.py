@@ -8,7 +8,11 @@ import pprint
 pp = pprint.PrettyPrinter()
 
 def test_func(test, f, *args, params=tuple(), **kwargs):
-    golden = f(np, *args, **kwargs)
+    try:
+        golden = f(np, *args, **kwargs)
+    except:
+        print(f"\x1b[1;31mgolden eval failed\x1b[m: {test}")
+        raise
 
     try:
         symbols = f(nf, *args, **kwargs)

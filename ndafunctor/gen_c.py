@@ -12,9 +12,11 @@ def gen_c_expr(scope, expr, output, indent=0):
         scope_depth = expr[2]
         idepth = expr[3]
         for i in range(len(shape)):
+            start, num, step = shape[i]
+            end =  start + num * step
             output.write(" "*indent*intent_spaces)
             idx = gen_c_expr(scope, ["idx", i, scope_depth, idepth], output, indent=0)
-            output.write("{}for(int {idx}=0;{idx}<{n};{idx}++)\n".format(" "*i*2, idx=idx, n=shape[i]))
+            output.write("{}for(int {idx}={start};{idx}<{end};{idx}+={step})\n".format(" "*i*2, idx=idx, start=start, end=end, step=step))
         return indent
 
     elif expr[0] == "for_scatter":
