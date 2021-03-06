@@ -6,11 +6,39 @@ class NumpyFunctor(Functor):
 
     def __getitem__(self, idx):
         if isinstance(idx, tuple):
-            pass
+            raise NotImplementedError("slice with tuple is not implemented")
         elif isinstance(idx, slice):
-            pass
+            start = idx.start
+            stop = idx.stop
+            step = idx.step or 1
+
+            while start < 0:
+                start += self.shape[0]
+            while stop < 0:
+                stop += self.shape[0]
+
+            stop = min(stop, self.shape[0])
+            base = start
+
+            num = (stop - start) // step
+            shape = list(self.shape)
+            shape[0] = num
+            partitions = [(0,s,1) for s in self.shape]
+            partitions[0] = (base,num,step)
+            iexpr = [f"i{i}" for i in range(len(self.shape))]
+            iexpr[0] = ["-", ["i0", base]]
+            return Functor(
+                shape,
+                partitions = [partitions],
+                vexpr = "v0",
+                iexpr = iexpr,
+                subs = [self],
+                desc = "{}[{}]".format(self.desc, idx)
+            )
         elif isinstance(idx, int):
-            if idx < len(self):
+            if idx < 0:
+                idx += self.shape[0]
+            if 0 <= idx and idx < len(self):
                 shape = list(self.shape[1:])
                 partitions = [(0,s,1) for s in self.shape]
                 partitions[0] = (idx,1,1)

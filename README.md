@@ -21,13 +21,13 @@
     * repeat
 * slicing
     * [n]
+    * [m:n]
 
 # Todo
 * elementwise operations (with value)
 * elementwise operations (with NDArray)
 * buffer wrapping
 * slicing
-    * [m:n]
     * [m:n,s]
     * [m:n,p:q]
     * [m:n:s,p:q:t]

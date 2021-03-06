@@ -6,10 +6,11 @@ def f0(np, d):
 
 test_func("slice_int_0", f0, 0)
 test_func("slice_int_1", f0, 1)
+test_func("slice_int__1", f0, -1)
 
 def f1(np):
-    a = [[[1],[2],[3]],[[4],[5],[6]]]
-    return np.array(a)[2:3]
+    a = [[[1],[2],[3]],[[4],[5],[6]],[[7],[8],[9]]]
+    return np.array(a)[1:3]
 
 test_func("slice_range", f1)
 
