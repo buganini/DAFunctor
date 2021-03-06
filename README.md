@@ -21,7 +21,9 @@
     * repeat
 
 # Todo
-* Elementwise operations
+* elementwise operations (with value)
+* elementwise operations (with NDArray)
+* buffer wrapping
 * slicing (step=1)
 * slicing (step>1)
 * slice assignment (step=1)
