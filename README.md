@@ -120,11 +120,14 @@ void gen_tensor3(float * tensor3)
 }
 ```
 
-# To be investigated for codegen:
-* CUDA
-* OpenMP
-* LLIR
-* Rust
+# To be investigated:
+## Codegen
+    * CUDA
+    * OpenMP
+    * LLIR
+    * Rust
+## Other
+    * Named tensor
 
 # Testing
 ```
