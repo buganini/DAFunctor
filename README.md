@@ -119,7 +119,7 @@ void gen_tensor3(float * tensor3)
 }
 ```
 
-# To be investigated:
+# To be investigated for codegen:
 * CUDA
 * OpenMP
 * LLIR
