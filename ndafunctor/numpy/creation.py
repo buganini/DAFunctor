@@ -115,7 +115,16 @@ def raw_meshgrid(*args):
     for i,arg in enumerate(args):
         if isinstance(arg, Functor):
             if len(arg.shape) == 1:
-                raise NotImplementedError()
+                f = arg
+                for j in range(len(args))[::-1]:
+                    if j < i:
+                        f = expand_dims(f, 0)
+                    elif j > i:
+                        f = expand_dims(f, 1)
+                for j in range(len(args)):
+                    if j != i:
+                        f = repeat(f, len(args[j]), j)
+                subs.append(f)
             else:
                 raise ValueError("meshgrid only accept 1-D array inputs")
         else:
