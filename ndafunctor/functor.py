@@ -159,7 +159,8 @@ def build_cfg(ctx, path):
     value = None
     scope = ctx
     idepth = 0
-    for depth, (functor, rg, sidx) in enumerate(path):
+    rg, phases = path
+    for depth, (functor, sidx) in enumerate(phases):
         if depth == 0:
             scope.append(["for_shape", rg, scope.depth + 1, idepth])
             scope = scope.enter()
@@ -178,10 +179,10 @@ def build_cfg(ctx, path):
 
         output = False
 
-        final_out = depth + 1 == len(path)
+        final_out = depth + 1 == len(phases)
         if not functor.sexpr is None: # scatter
             val = ["v", scope.depth]
-            scope.append(["val", path[-1][0].get_type(), val, value])
+            scope.append(["val", phases[-1][0].get_type(), val, value])
             scope.append(["for_scatter", functor.shape, functor.sexpr, scope.depth + 1, idepth])
             scope = scope.enter()
             value = val
@@ -223,7 +224,9 @@ def build_ast(ctx, expr, sidx, functor, depth):
 def tailor_shape(paths):
     ret = []
     for path in paths:
-        bfunctor, brg, bsidx = path[0]
+        brg = path[0]
+        phases = path[1]
+        bfunctor, bsidx = phases[0]
         vs = [set() for i in range(len(bfunctor.shape))]
 
         for idx in ranger(brg):
@@ -240,7 +243,7 @@ def tailor_shape(paths):
 
             idx = pidx
 
-            for functor, rg, sidx in path[1:]:
+            for functor, sidx in phases[1:]:
                 if functor.partitions:
                     sfunctor = functor.subs[sidx]
                     srg = functor.partitions[sidx]
@@ -273,8 +276,8 @@ def tailor_shape(paths):
         num = [len(v) for v in vs]
         if all([n > 0 for n in num]):
             base = [min(v) for v in vs]
-            path[0][1] = [(b,n,1) for b,n in zip(base, num)]
-            ret.append(path)
+            rg = [(b,n,1) for b,n in zip(base, num)]
+            ret.append((rg, phases))
     return ret
 
 class Data(list):
@@ -511,15 +514,15 @@ class Functor():
 
         if self.partitions:
             for i,_ in enumerate(self.partitions):
-                for b in self.subs[i].build_blocks():
-                    paths.append(b + [[self, rg, i]])
+                for brg,bpath in self.subs[i].build_blocks():
+                    paths.append((brg, bpath+[(self, i)]))
         else:
             for i in range(len(self.subs)):
-                for b in self.subs[i].build_blocks():
-                    paths.append(b + [[self, rg, i]])
+                for brg,bpath in self.subs[i].build_blocks():
+                    paths.append((brg, bpath+[(self, i)]))
 
         if not paths:
-            paths.append([[self, rg, 0]])
+            paths.append((rg, [(self, 0)]))
 
         return paths
 
