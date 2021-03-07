@@ -34,7 +34,7 @@ def gen_c_expr(scope, expr, output, indent=0):
                 idx = gen_c_expr(scope, ["idx", d, scope_depth, idepth], output, indent=0)
                 fidx = gen_c_expr(scope, ["idx", d, scope_depth-1, idepth], output, indent=0)
                 output.write(" "*indent*intent_spaces)
-                output.write(f"int {idx} = {fidx};\n")
+                output.write(f"const int {idx} = {fidx};\n")
 
         offset = gen_c_expr(scope, ["idx", axis, scope_depth-1, idepth], output, indent=0)
         idx = gen_c_expr(scope, ["idx", axis, scope_depth, idepth], output, indent=0)
@@ -88,7 +88,7 @@ def gen_c_expr(scope, expr, output, indent=0):
         name = gen_c_expr(scope, expr[2], output, indent=0)
         expr = gen_c_expr(scope, expr[3], output, indent=0)
         output.write(" "*indent*intent_spaces)
-        output.write(f"{dtype} {name} = {expr};\n")
+        output.write(f"const {dtype} {name} = {expr};\n")
         return indent
 
     elif expr[0] == "ref":
