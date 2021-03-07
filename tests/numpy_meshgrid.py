@@ -7,6 +7,6 @@ def f1(np):
 test_func("meshgrid_data", f1)
 
 def f2(np):
-    return np.array(np.meshgrid(np.arange(1,3),np.arange(3,6),np.arange(7,11)))
+    return np.array(np.meshgrid(np.arange(1,3),np.arange(3,6),[7,8,9,10]))
 
 test_func("meshgrid_arange", f2)
