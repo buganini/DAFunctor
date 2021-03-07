@@ -123,6 +123,8 @@ def gen_c_expr(scope, expr, output, indent=0):
     elif expr[0] == "func":
         out = expr[1]
         params = expr[2]
+        const_data = expr[3]
+
         output.write(" "*indent*intent_spaces)
         args = [f"{to_c_type(out.get_type())} * {out.name} /* {list(out.shape)}={functools.reduce(lambda x,y:x*y, out.shape)} */"]
         for p in params:
@@ -131,7 +133,26 @@ def gen_c_expr(scope, expr, output, indent=0):
 
         output.write(" "*indent*intent_spaces)
         output.write("{\n")
-        return indent + 1
+
+        indent += 1
+
+        if const_data:
+            for sym_name in const_data:
+                dtype, data = const_data[sym_name]
+                isarray = True
+                output.write(" "*indent*intent_spaces)
+                output.write("const static {dtype} {name}".format(dtype=to_c_type(dtype), name=sym_name))
+                if isarray:
+                    output.write("[] = {")
+                    output.write(",".join([str(x) for x in data]))
+                    output.write("};\n")
+                else:
+                    output.write(" = ")
+                    output.write(data)
+                    output.write(";\n")
+            output.write("\n")
+
+        return indent
 
     elif expr[0] == "endfunc":
         output.write(" "*(indent-1)*intent_spaces)
@@ -142,21 +163,9 @@ def gen_c_expr(scope, expr, output, indent=0):
         raise NotImplementedError("Unknown expr op {}".format(expr[0]))
 
 def gen_func(ctx, output):
-    output.write("#include <stdio.h>\n");
-    output.write("#include <math.h>\n");
+    output.write("#include <stdio.h>\n")
+    output.write("#include <math.h>\n")
     output.write("\n")
-
-    if ctx.data:
-        output.write("// Data\n");
-    for sym_name in ctx.data:
-        dtype, data = ctx.data[sym_name]
-        array = False
-        output.write("{dtype} {name}".format(dtype=to_c_type(dtype), name=sym_name));
-        output.write("[] = {")
-        output.write(",".join([str(x) for x in data]))
-        output.write("};\n");
-    if ctx.data:
-        output.write("\n");
 
     indent = 0
     for expr in ctx.stmt:

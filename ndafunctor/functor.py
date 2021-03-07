@@ -546,7 +546,7 @@ class Functor():
         os.makedirs(jitdir, exist_ok=True)
 
         ctx = CFG(self)
-        ctx.append(["func", self, args])
+        ctx.append(["func", self, args, ctx.data])
         self.build_cfg(ctx)
         ctx.append(["endfunc"])
 
