@@ -56,7 +56,7 @@ array([[[1., 2.],
         [4., 4.],
         [5., 5.]]], dtype=float32)
 >>> s.print()
-Functor: #3
+Functor: #3 tensor3
     transposed_raw_meshgrid
     shape=((0, 2, 1), (0, 3, 1), (0, 2, 1))
     partitions=[[(0, 2, 1), (0, 2, 1), (0, 3, 1)]]
@@ -93,7 +93,7 @@ Functor: #3
 int d_meshgrid_0[] = {1,2};
 int d_meshgrid_1[] = {3,4,5};
 
-void gen_tensor3(float * tensor3)
+void gen_tensor3(float * tensor3 /* [2, 3, 2]=12 */)
 {
     for(int i0=0;i0<2;i0+=1)
       for(int i1=0;i1<3;i1+=1)
