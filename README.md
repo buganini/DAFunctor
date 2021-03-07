@@ -6,7 +6,7 @@
     * Dynamic transpose
 
 # Advantages
-* Small memory footprint (few no intermediate buffers)
+* Small memory footprint (few intermediate buffers, no manualy handling required)
 * No memory management
 * No unnecessary `if` in loop
 * Side-by-side comparison with numpy results
