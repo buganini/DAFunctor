@@ -5,7 +5,15 @@
     * Dynamic shape
     * Dynamic transpose
 
+# Advantages
+* Small memory footprint (few no intermediate buffers)
+* No memory management
+* No unnecessary `if` in loop
+* Side-by-side comparison with numpy results
+* Pre-runtime safety check
+
 # Supported operations
+## Numpy
 * creation
     * array
     * zeros
@@ -26,6 +34,7 @@
     * [m:n]
 
 # Todo
+## Numpy
 * elementwise operations (with value)
 * elementwise operations (with NDArray)
 * slicing
@@ -33,6 +42,9 @@
     * [m:n,p:q]
     * [m:n:s,p:q:t]
 * slice assignment
+
+## PyTorch
+* TBD
 
 # Example
 ```
