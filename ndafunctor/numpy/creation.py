@@ -92,8 +92,9 @@ def arange(*args):
     else:
         raise NotImplementedError("arange")
 
+    import math
     data = [start,end,step]
-    shape = [(end - start) // step]
+    shape = [int(math.ceil((end - start) / step))]
     return NumpyFunctor(
         shape,
         vexpr = ["+",["d0",["*",["i0","d2"]]]], # start + i * step
