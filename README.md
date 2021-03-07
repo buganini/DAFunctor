@@ -6,11 +6,13 @@
     * Dynamic transpose
 
 # Advantages
-* Small memory footprint (few intermediate buffers, no manualy handling required)
+* Small memory footprint (minimal intermediate buffers, no manual handling required)
 * No memory management
 * No unnecessary `if` in loop
 * Side-by-side comparison with numpy results
 * Pre-runtime safety check
+* Simple C code generation
+* No dependencies
 
 # Supported operations
 ## Numpy
