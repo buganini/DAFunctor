@@ -574,7 +574,7 @@ class Functor():
                     dargs.append(x)
                 else:
                     raise ValueError(f"Unknown data type {type(x)}")
-            ret = numpy.zeros(self.shape, dtype=to_numpy_type(self.get_type()))
+            ret = numpy.empty(self.shape, dtype=to_numpy_type(self.get_type()))
             pointer = ret.ctypes.data_as(ctypes.c_void_p)
             f(pointer, *dargs)
             return ret
