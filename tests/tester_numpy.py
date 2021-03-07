@@ -64,6 +64,12 @@ def test_func(test, f, *args, params=tuple(), **kwargs):
 
     print("\x1b[1;32mOK\x1b[m", test)
 
+    import timeit
+    iter = 1000
+    numpy_time = timeit.timeit(lambda: f(np, *args, **kwargs), number=iter)
+    ndaf_time = timeit.timeit(lambda: func(*args), number=iter)
+    print("  Gain", numpy_time/ndaf_time)
+
 if __name__=="__main__":
     import importlib
     for fn in sorted(os.listdir(os.path.dirname(os.path.abspath(__file__)))):
