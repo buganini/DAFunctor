@@ -17,6 +17,7 @@ import re
 from functools import reduce
 from .gen_c import *
 from .typing import *
+from .pytyping import *
 from collections import OrderedDict
 
 def ranger(rg):
@@ -86,7 +87,7 @@ class Expr():
         return ret
 
 def eval_expr(functor, expr, index=None, sidx=None):
-    if isinstance(expr, Functor):
+    if is_functor(expr):
         return expr.eval()
 
     if not type(expr) is Expr:
@@ -150,7 +151,7 @@ def eval_expr(functor, expr, index=None, sidx=None):
     else:
         raise NotImplementedError("Invalid token {}".format(op))
 
-    if isinstance(ret, Functor):
+    if is_functor(ret):
         ret = ret.eval()
 
     return ret
@@ -569,9 +570,9 @@ class Functor():
         def func(*args):
             dargs = []
             for x in args:
-                if isinstance(x, Functor):
+                if is_functor(x):
                     dargs.append(ctypes.cast(x.buffer, ctypes.c_void_p))
-                elif isinstance(x, numpy.ndarray):
+                elif is_numpy(x):
                     dargs.append(x.ctypes.data_as(ctypes.c_void_p))
                 elif type(x) in (int, float):
                     dargs.append(x)

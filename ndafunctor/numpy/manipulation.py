@@ -1,5 +1,6 @@
 from ..functor import Functor, Data
 from .functor import NumpyFunctor
+from ..pytyping import *
 from ..ast import strip as ast_strip
 import functools
 
@@ -105,7 +106,7 @@ def expand_dims(a, axis):
     )
 
 def repeat(a, repeats, axis=None):
-    if isinstance(a, Functor):
+    if is_functor(a):
         if axis is None:
             sz = functools.reduce(lambda x,y:x*y, a.shape)
             flt = reshape(a, [sz])

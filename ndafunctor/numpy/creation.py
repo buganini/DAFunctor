@@ -1,5 +1,6 @@
 from ..functor import Functor, Data, Buffer
 from ..typing import *
+from ..pytyping import *
 from .functor import NumpyFunctor
 from .manipulation import *
 
@@ -35,7 +36,7 @@ def _flatten(data):
     return ret
 
 def array(data):
-    if isinstance(data, Functor):
+    if is_functor(data):
         return data
     shape = _shape(data)
     if shape is None:
@@ -114,7 +115,7 @@ def raw_meshgrid(*args):
     # data[i0][i[i0+1]]
     subs = []
     for i,arg in enumerate(args):
-        if isinstance(arg, Functor):
+        if is_functor(arg):
             if len(arg.shape) == 1:
                 f = arg
                 for j in range(len(args))[::-1]:
