@@ -11,7 +11,6 @@ def transpose(functor, dims):
         shape,
         partitions = [[(0,s,1) for s in functor.shape]],
         iexpr = iexpr,
-        vexpr = "v0",
         desc = f"transposed_{functor.desc}",
         subs = [functor]
     )
@@ -45,7 +44,6 @@ def reshape(a, shape):
     return NumpyFunctor(
         shape,
         partitions = [[(0,s,1) for s in a.shape]],
-        vexpr = "v0",
         iexpr = iexpr,
         desc = f"reshape({shape})_{a.desc}",
         subs = [a]
@@ -99,7 +97,6 @@ def expand_dims(a, axis):
     return NumpyFunctor(
         shape,
         partitions = [[(0,s,1) for s in a.shape]],
-        vexpr = "v0",
         iexpr = iexpr,
         desc = f"expand_dims_{axis}_{a.desc}",
         subs = [a]
@@ -117,7 +114,6 @@ def repeat(a, repeats, axis=None):
             return NumpyFunctor(
                 shape,
                 partitions = [[(0,sz,1)]],
-                vexpr = "v0",
                 iexpr = iexpr,
                 sexpr = sexpr,
                 desc = f"repeat_{repeats}",
@@ -132,7 +128,6 @@ def repeat(a, repeats, axis=None):
             return NumpyFunctor(
                 shape,
                 partitions = [[(0,s,1) for s in a.shape]],
-                vexpr = "v0",
                 iexpr = iexpr,
                 sexpr = sexpr,
                 desc = f"repeat_{repeats}",

@@ -30,7 +30,6 @@ class NumpyFunctor(Functor):
             return Functor(
                 shape,
                 partitions = [partitions],
-                vexpr = "v0",
                 iexpr = iexpr,
                 subs = [self],
                 desc = "{}[{}]".format(self.desc, idx)
@@ -46,7 +45,6 @@ class NumpyFunctor(Functor):
                 return Functor(
                     shape,
                     partitions = [partitions],
-                    vexpr = "v0",
                     iexpr = iexpr,
                     subs = [self],
                     desc = "{}[{}]".format(self.desc, idx)
@@ -56,3 +54,11 @@ class NumpyFunctor(Functor):
         else:
             raise TypeError("Invalid index type")
 
+
+    def __add__(self, a):
+        from .math import add
+        return add(self, a)
+
+    def __radd__(self, b):
+        from .math import add
+        return add(b, self)

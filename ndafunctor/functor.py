@@ -54,7 +54,7 @@ class CFG():
 
 class Expr():
     def __init__(self, expr, ref_functor=None, ref_i=None):
-        if type(expr) in (int, float, str, Expr):
+        if type(expr) in (int, float, str, Expr) or is_functor(expr):
             self.op = expr
             self.args = []
         else:
@@ -88,13 +88,14 @@ class Expr():
 
 def eval_expr(functor, expr, index=None, sidx=None):
     if is_functor(expr):
-        return expr.eval()
+        a = expr.eval()
+        return a[index]
 
     if not type(expr) is Expr:
         return expr
 
     op = expr.op
-    if type(op) in (int, float):
+    if is_number(op):
         ret = op
     elif op == "+":
         a = [eval_expr(functor, e, index, sidx) for e in expr]
@@ -141,7 +142,7 @@ def eval_expr(functor, expr, index=None, sidx=None):
             print(f"#{functor.id} {op}: {index}[{idx}]")
             raise
     elif re.match("v[0-9]+", op):
-        return functor.subs[int(op[1:])][index]
+        return functor.subs[int(op[1:])].eval()[index]
     elif op  == "buf":
         import struct
         if functor.buffer is None:
@@ -176,7 +177,7 @@ def build_cfg(ctx, path):
                 for d,iexpr in enumerate(functor.iexpr):
                     scope.append(["val", "i", ["idx", d, scope.depth, idepth+1], build_ast(scope, Expr(iexpr), sidx, functor.subs[sidx], idepth)])
                 idepth += 1
-            value = build_ast(scope, Expr(functor.vexpr), sidx, functor, depth)
+            value = build_ast(scope, Expr(functor.vexpr), sidx, functor, idepth)
 
         output = False
 
@@ -216,6 +217,10 @@ def build_ast(ctx, expr, sidx, functor, depth):
         return ["term", functor.data[i]]
     elif re.match("i[0-9]+", op):
         return ["idx", int(op[1:]), ctx.depth, depth]
+    elif re.match("v[0-9]+", op):
+        i = int(op[1:])
+        s = functor.subs[i]
+        return build_ast(ctx, Expr(s.vexpr), i, s, depth)
     elif op == "buf":
         buf_idx = build_ast(ctx, expr[0], sidx, functor, depth)
         return ["ref", functor.name, buf_idx]
@@ -340,7 +345,7 @@ class Shape():
 
 class Functor():
     acc = 0
-    def __init__(self, shape, partitions=None, dtype=None, vexpr=None, iexpr=None, sexpr=None, data=None, subs=[], desc=None, name=None, buffer=None):
+    def __init__(self, shape, partitions=None, dtype=None, vexpr=None, iexpr=None, sexpr=None, data=None, subs=[], desc=None, name=None, buffer=None, src_func=None):
         # external perspective
         self.id = Functor.acc
         Functor.acc += 1
@@ -367,6 +372,7 @@ class Functor():
         # runtime
         self.generated = False
         self.eval_cached = None
+        self.src_func = src_func
 
     def __str__(self):
         return self.__repr__()
