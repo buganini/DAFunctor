@@ -3,12 +3,9 @@ import os
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 import numpy as np
 import ndafunctor.numpy as nf
-import pprint
 from pygments import highlight
 from pygments.formatters import TerminalFormatter as Formatter
 from pygments.lexers import CLexer as Lexer
-
-pp = pprint.PrettyPrinter()
 
 def test_func(test, f, *args, params=tuple(), **kwargs):
     try:
@@ -42,7 +39,7 @@ def test_func(test, f, *args, params=tuple(), **kwargs):
     except:
         symbols.print()
         try:
-            pp.pprint(symbols.build_cfg())
+            symbols.build_cfg().print()
         except:
             print("Unable to build CFG")
         print(f"\x1b[1;31mjit failed\x1b[m: {test}")
@@ -56,7 +53,7 @@ def test_func(test, f, *args, params=tuple(), **kwargs):
     if not np.array_equal(golden, cv):
         symbols.print()
         try:
-            pp.pprint(symbols.build_cfg())
+            symbols.build_cfg().print()
         except:
             print("Unable to build CFG")
 

@@ -1,4 +1,5 @@
 import functools
+from .common import *
 from .typing import *
 
 intent_spaces = 4
@@ -11,7 +12,7 @@ def gen_c_expr(scope, expr, output, indent=0):
         shape = expr[1]
         scope_depth = expr[2]
         idepth = expr[3]
-        for i in range(len(shape)):
+        for i in rangel(shape):
             start, num, step = shape[i]
             end =  start + num * step
             output.write(" "*indent*intent_spaces)
@@ -29,7 +30,7 @@ def gen_c_expr(scope, expr, output, indent=0):
         num = scatter[2]
         step = scatter[3]
         end =  start + num * step
-        for d in range(len(shape)):
+        for d in rangel(shape):
             if d != axis:
                 idx = gen_c_expr(scope, ["idx", d, scope_depth, idepth], output, indent=0)
                 fidx = gen_c_expr(scope, ["idx", d, scope_depth-1, idepth], output, indent=0)
@@ -48,7 +49,7 @@ def gen_c_expr(scope, expr, output, indent=0):
         idepth = expr[3]
         scope_depth = expr[4]
         idx = []
-        for i in range(len(tensor.shape)):
+        for i in rangel(tensor.shape):
             didx = [gen_c_expr(scope, ["idx", i, scope_depth, idepth], output, indent=0)]
             for j in range(i+1,len(tensor.shape)):
                 didx.append("{}".format(tensor.shape[j]))
@@ -81,6 +82,15 @@ def gen_c_expr(scope, expr, output, indent=0):
         indent -= 1
         output.write(" "*indent*intent_spaces)
         output.write("}\n")
+        return indent
+
+    elif expr[0] == "autobuf":
+        functor = expr[1]
+        dtype = to_c_type(functor.get_type())
+        name = functor.get_name()
+        size = ' * '.join([str(x) for x in functor.shape])
+        output.write(" "*indent*intent_spaces)
+        output.write(f"AUTOBUF {dtype} {name}[{size}];\n")
         return indent
 
     elif expr[0] == "val":
@@ -119,6 +129,12 @@ def gen_c_expr(scope, expr, output, indent=0):
 
     elif expr[0] == "term":
         return str(expr[1])
+
+    elif expr[0] == "comment":
+        output.write("\n");
+        output.write(" "*indent*intent_spaces)
+        output.write(f"// {expr[1]}\n\n");
+        return indent
 
     elif expr[0] == "func":
         out = expr[1]
@@ -165,6 +181,7 @@ def gen_c_expr(scope, expr, output, indent=0):
 def gen_func(ctx, output):
     output.write("#include <stdio.h>\n")
     output.write("#include <math.h>\n")
+    output.write("#define AUTOBUF\n")
     output.write("\n")
 
     indent = 0

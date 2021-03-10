@@ -1,6 +1,7 @@
 from ..functor import Functor, Data, Buffer
 from ..typing import *
 from ..pytyping import *
+from ..common import *
 from .functor import NumpyFunctor
 from .manipulation import *
 
@@ -47,7 +48,7 @@ def array(data):
             +
             [shape[j] for j in range(i+1, len(shape))]
         ]
-        for i in range(len(shape))
+        for i in rangel(shape)
     ]])
     return NumpyFunctor(
         shape,
@@ -106,10 +107,10 @@ def arange(*args):
 def raw_meshgrid(*args):
     shape = [len(args)]
     partitions = []
-    for i in range(len(args)):
+    for i in rangel(args):
         shape.append(len(args[i]))
         rgs = []
-        for j in range(len(args)):
+        for j in rangel(args):
             rgs.append((0,len(args[j]),1))
         partitions.append(rgs)
     # data[i0][i[i0+1]]
@@ -118,12 +119,12 @@ def raw_meshgrid(*args):
         if is_functor(arg):
             if len(arg.shape) == 1:
                 f = arg
-                for j in range(len(args))[::-1]:
+                for j in rangel(args)[::-1]:
                     if j < i:
                         f = expand_dims(f, 0)
                     elif j > i:
                         f = expand_dims(f, 1)
-                for j in range(len(args)):
+                for j in rangel(args):
                     if j != i:
                         f = repeat(f, len(args[j]), j)
                 subs.append(f)

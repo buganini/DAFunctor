@@ -108,6 +108,9 @@ class Functor():
         self._ndaf_is_contiguous = is_contiguous
         self._ndaf_requested_contiguous = False
         self._ndaf_eval_cached = None
+        self._ndaf_exported = False
+        self._ndaf_is_output = False
+        self._ndaf_is_declared = False
 
     def __str__(self):
         return self.__repr__()
@@ -247,10 +250,18 @@ class Functor():
         if ctx is None:
             ctx = CFG(self)
 
-        paths = build_blocks(self)
-        paths = tailor_shape(paths)
-        for path in paths:
-            build_cfg(ctx, path)
+        self._ndaf_requested_contiguous = True
+        self._ndaf_is_output = True
+        graphs = split_graph(self)
+        for graph in graphs:
+            paths = build_blocks(graph, graph)
+            paths = tailor_shape(paths)
+            for path in paths:
+                functor = path[1][-1][0]
+                build_cfg(ctx, path)
+            if not functor._ndaf_is_output:
+                ctx.append(["comment", f"end of {functor.get_name()}"])
+            graph._ndaf_exported = True
         return ctx
 
     def get_name(self):

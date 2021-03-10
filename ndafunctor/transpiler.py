@@ -31,6 +31,19 @@ class CFG():
         self.append(["scope", scope])
         return scope
 
+    def print(self):
+        import pprint
+        pp = pprint.PrettyPrinter()
+        pp.pprint(self.stmt)
+
+def split_graph(functor):
+    ret = []
+    for f in functor.subs:
+        ret.extend(split_graph(f))
+    if functor._ndaf_requested_contiguous and not functor._ndaf_is_contiguous:
+        ret.append(functor)
+    return ret
+
 def build_cfg(ctx, path):
     value = None
     scope = ctx
@@ -38,6 +51,10 @@ def build_cfg(ctx, path):
     rg, phases = path
     for depth, (functor, sidx) in enumerate(phases):
         if depth == 0:
+            out = phases[-1][0]
+            if not out._ndaf_is_output and not out._ndaf_is_declared:
+                out._ndaf_is_declared = True
+                scope.append(["autobuf", out])
             scope.append(["for_shape", rg, scope.depth + 1, idepth])
             scope = scope.enter()
 
@@ -51,7 +68,9 @@ def build_cfg(ctx, path):
                 for d,iexpr in enumerate(functor.iexpr):
                     scope.append(["val", "i", ["idx", d, scope.depth, idepth+1], build_ast(scope, Expr(iexpr), sidx, functor.subs[sidx], idepth)])
                 idepth += 1
-            value = build_ast(scope, Expr(functor.vexpr), sidx, functor, idepth)
+            next_value = build_ast(scope, Expr(functor.vexpr), sidx, functor, idepth)
+            if not next_value is None:
+                value = next_value
 
         output = False
 
@@ -63,6 +82,9 @@ def build_cfg(ctx, path):
             scope = scope.enter()
             value = val
         if final_out:
+            if value is None:
+                print("Path", path)
+                raise AssertionError("value is None")
             scope.append(["=", functor, value, idepth, scope.depth])
 
 def build_ast(ctx, expr, sidx, functor, depth):
@@ -94,10 +116,15 @@ def build_ast(ctx, expr, sidx, functor, depth):
     elif re.match("v[0-9]+", op):
         i = int(op[1:])
         s = functor.subs[i]
-        if functor.ndaf_is_contiguous():
-            return functor.get_name()
-        else:
+        if functor._ndaf_exported:
+            axis = []
+            for i in rangel(functor.shape):
+                axis.append(["*", [f"i{i}"]+[s for s in functor.shape[i+1:]]])
+            return ["ref", functor.get_name(), ["+", axis]]
+        elif not s.vexpr is None:
             return build_ast(ctx, Expr(s.vexpr), i, s, depth)
+        else:
+            return None
     elif op == "buf":
         buf_idx = build_ast(ctx, expr[0], sidx, functor, depth)
         return ["ref", functor.name, buf_idx]
@@ -110,7 +137,7 @@ def tailor_shape(paths):
         brg = path[0]
         phases = path[1]
         bfunctor, bsidx = phases[0]
-        vs = [set() for i in range(len(bfunctor.shape))]
+        vs = [set() for i in rangel(bfunctor.shape)]
 
         for idx in ranger(brg):
             cidx = idx
@@ -163,18 +190,18 @@ def tailor_shape(paths):
             ret.append((rg, phases))
     return ret
 
-def build_blocks(functor):
+def build_blocks(functor, target):
     paths = []
     rg = functor.shape.shape
 
-    if not functor.ndaf_is_contiguous():
+    if functor is target or not functor.ndaf_is_contiguous():
         if functor.partitions:
             for i,_ in enumerate(functor.partitions):
-                for brg,bpath in build_blocks(functor.subs[i]):
+                for brg,bpath in build_blocks(functor.subs[i], target):
                     paths.append((brg, bpath+[(functor, i)]))
         else:
-            for i in range(len(functor.subs)):
-                for brg,bpath in build_blocks(functor.subs[i]):
+            for i in rangel(functor.subs):
+                for brg,bpath in build_blocks(functor.subs[i], target):
                     paths.append((brg, bpath+[(functor, i)]))
 
     if not paths:

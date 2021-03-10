@@ -9,6 +9,7 @@
 
 ## Value
 #  i{n} index on n-th axis
+#  v{n} value of n-th sub-functor at specified index
 #  d data value
 #  si index of sub-functors
 

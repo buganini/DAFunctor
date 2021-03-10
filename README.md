@@ -31,6 +31,7 @@
     * reshape
     * concatenate
     * repeat
+    * ascontiguousarray
 * slicing
     * [n]
     * [m:n]

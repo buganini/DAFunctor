@@ -25,7 +25,7 @@ class NumpyFunctor(Functor):
             shape[0] = num
             partitions = [(0,s,1) for s in self.shape]
             partitions[0] = (base,num,step)
-            iexpr = [f"i{i}" for i in range(len(self.shape))]
+            iexpr = [f"i{i}" for i in rangel(self.shape)]
             iexpr[0] = ["-", ["i0", base]]
             return Functor(
                 shape,
