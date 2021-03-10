@@ -1,297 +1,17 @@
-## Operators:
-#  * addidion
-#  - substraction
-#  * multiplication
-#  / division
-#  // integer division
-#  % modulo
-#  ref reference
-
-## Value
-#  i{n} index on n-th axis
-#  d data value
-#  si index of sub-functors
-
 import os
-import re
-from functools import reduce
 from .gen_c import *
 from .typing import *
 from .pytyping import *
-from collections import OrderedDict
-
-def ranger(rg):
-    import itertools
-    return itertools.product(*[range(base,base+num*step,step) for base,num,step in rg])
-
-class CFG():
-    def __init__(self, target, parent=None, data=None):
-        self.target = target
-        self.parent = parent
-        if parent is None:
-            self.depth = -1
-        else:
-            self.depth = parent.depth + 1
-        self.data = data
-        if self.data is None:
-            self.data = OrderedDict()
-        self.stmt = []
-        self.output = False
-
-    def __repr__(self):
-        return str(self.stmt)
-
-    def __str__(self):
-        return self.__repr__()
-
-    def append(self, stmt):
-        self.stmt.append(stmt)
-
-    def enter(self):
-        scope = CFG(self.target, parent=self, data=self.data)
-        self.append(["scope", scope])
-        return scope
-
-class Expr():
-    def __init__(self, expr, ref_functor=None, ref_i=None):
-        if type(expr) in (int, float, str, Expr) or is_functor(expr):
-            self.op = expr
-            self.args = []
-        else:
-            self.op = expr[0]
-            self.args = expr[1]
-        self.functor = ref_functor
-        self.i = ref_i
-
-    def __getitem__(self, idx):
-        return Expr(self.args[idx], self.functor, self.i)
-
-    def __str__(self):
-        return f"[{self.op}, [{self.args}]]"
-
-    def __repr__(self):
-        return self.__str__()
-
-    def search(self, p):
-        todo = [self]
-        ret = set()
-        while todo:
-            t = todo.pop(0)
-            if type(t) is Expr:
-                todo.append(t.op)
-                todo.extend(t.args)
-                continue
-            if type(t) is str:
-                if re.match(p, t):
-                    ret.add(t)
-        return ret
-
-def eval_expr(functor, expr, index=None, sidx=None):
-    if is_functor(expr):
-        a = expr.eval()
-        return a[index]
-
-    if not type(expr) is Expr:
-        return expr
-
-    op = expr.op
-    if is_number(op):
-        ret = op
-    elif op == "+":
-        a = [eval_expr(functor, e, index, sidx) for e in expr]
-        ret = reduce(lambda x,y:x+y, a)
-    elif op == "-":
-        a = [eval_expr(functor, e, index, sidx) for e in expr]
-        ret = reduce(lambda x,y:x-y, a)
-    elif op == "*":
-        a = [eval_expr(functor, e, index, sidx) for e in expr]
-        ret = reduce(lambda x,y:x*y, a)
-    elif op == "//":
-        a = [eval_expr(functor, e, index, sidx) for e in expr]
-        ret = reduce(lambda x,y:x//y, a)
-    elif op == "/":
-        a = [eval_expr(functor, e, index, sidx) for e in expr]
-        ret = reduce(lambda x,y:x/y, a)
-    elif op == "%":
-        a = [eval_expr(functor, e, index, sidx) for e in expr]
-        ret = reduce(lambda x,y:x%y, a)
-    elif op == "ref":
-        ref_a = eval_expr(functor, expr[0], index, sidx)
-        ref_b = eval_expr(functor, expr[1], index, sidx)
-        if type(ref_b) is list:
-            ref_b = tuple(ref_b)
-        # print("ref_a", ref_a)
-        # print("ref_b", ref_b)
-        ret = ref_a[ref_b]
-    elif op == "si":
-        return sidx
-    elif op == "d":
-        ret = functor.data
-    elif re.match("-?[0-9]+", op):
-        ret = int(op)
-    elif re.match("d[0-9]+", op):
-        ret = functor.data[int(op[1:])]
-    elif re.match("i[0-9]+", op):
-        # print("functor", functor)
-        # print("op", op)
-        # print("index", index)
-        idx = int(op[1:])
-        try:
-            ret = index[idx]
-        except:
-            print(f"#{functor.id} {op}: {index}[{idx}]")
-            raise
-    elif re.match("v[0-9]+", op):
-        return functor.subs[int(op[1:])].eval()[index]
-    elif op  == "buf":
-        import struct
-        if functor.buffer is None:
-            raise AssertionError(f"Reference unset buffer of {functor}")
-        buf_idx = eval_expr(functor, expr[0], index, sidx)
-        return struct.unpack(to_struct_type(functor.dtype)*functor.shape[0], functor.buffer)[buf_idx]
-    else:
-        raise NotImplementedError("Invalid token {}".format(op))
-
-    if is_functor(ret):
-        ret = ret.eval()
-
-    return ret
-
-def build_cfg(ctx, path):
-    value = None
-    scope = ctx
-    idepth = 0
-    rg, phases = path
-    for depth, (functor, sidx) in enumerate(phases):
-        if depth == 0:
-            scope.append(["for_shape", rg, scope.depth + 1, idepth])
-            scope = scope.enter()
-
-        if functor.partitions:
-            if functor.iexpr:
-                for d,iexpr in enumerate(functor.iexpr):
-                    scope.append(["val","i", ["idx", d, scope.depth, idepth+1], build_ast(scope, Expr(iexpr), sidx, functor.subs[sidx], idepth)])
-                idepth += 1
-        else:
-            if functor.iexpr:
-                for d,iexpr in enumerate(functor.iexpr):
-                    scope.append(["val", "i", ["idx", d, scope.depth, idepth+1], build_ast(scope, Expr(iexpr), sidx, functor.subs[sidx], idepth)])
-                idepth += 1
-            value = build_ast(scope, Expr(functor.vexpr), sidx, functor, idepth)
-
-        output = False
-
-        final_out = depth + 1 == len(phases)
-        if not functor.sexpr is None: # scatter
-            val = ["v", scope.depth]
-            scope.append(["val", phases[-1][0].get_type(), val, value])
-            scope.append(["for_scatter", functor.shape, functor.sexpr, scope.depth + 1, idepth])
-            scope = scope.enter()
-            value = val
-        if final_out:
-            scope.append(["=", functor, value, idepth, scope.depth])
-
-def build_ast(ctx, expr, sidx, functor, depth):
-    op = expr.op
-    if type(op) in (int, float):
-        return op
-    elif op in ("+","-","*","//","/","%"):
-        args = [build_ast(ctx, e, sidx, functor, depth) for e in expr]
-        return [op, args]
-    elif op == "ref":
-        ref_a = build_ast(ctx, expr[0], sidx, functor, depth)
-        ref_b = build_ast(ctx, expr[1], sidx, functor, depth)
-        if type(ref_b) is list:
-            ref_b = tuple(ref_b)
-        return ["ref", ref_a, ref_b]
-    elif op == "si":
-        return sidx
-    elif op == "d":
-        name = functor.data.get_name()
-        ctx.data[name] = (functor.data.get_type(), functor.data)
-        return name
-    elif re.match("-?[0-9]+", op):
-        return ["term",op]
-    elif re.match("d[0-9]+", op):
-        i = int(op[1:])
-        return ["term", functor.data[i]]
-    elif re.match("i[0-9]+", op):
-        return ["idx", int(op[1:]), ctx.depth, depth]
-    elif re.match("v[0-9]+", op):
-        i = int(op[1:])
-        s = functor.subs[i]
-        return build_ast(ctx, Expr(s.vexpr), i, s, depth)
-    elif op == "buf":
-        buf_idx = build_ast(ctx, expr[0], sidx, functor, depth)
-        return ["ref", functor.name, buf_idx]
-    else:
-        raise NotImplementedError("Invalid token {}".format(op))
-
-def tailor_shape(paths):
-    ret = []
-    for path in paths:
-        brg = path[0]
-        phases = path[1]
-        bfunctor, bsidx = phases[0]
-        vs = [set() for i in range(len(bfunctor.shape))]
-
-        for idx in ranger(brg):
-            cidx = idx
-            in_range = True
-
-            if bfunctor.partitions:
-                raise ValueError(f"Partitioned root functor {bfunctor}")
-            else:
-                pidx = bfunctor.eval_index(idx)
-
-            if pidx is None:
-                continue
-
-            idx = pidx
-
-            for functor, sidx in phases[1:]:
-                if functor.partitions:
-                    sfunctor = functor.subs[sidx]
-                    srg = functor.partitions[sidx]
-                    if len(idx) != len(srg):
-                        raise AssertionError(f"Dimension mismatch {idx} {srg}")
-                    if not all([i>=r[0] for i,r in zip(idx, srg)]):
-                        in_range = False
-                        break
-                    if not all([i<r[0]+r[1]*r[2] for i,r in zip(idx, srg)]):
-                        in_range = False
-                        break
-                    if not all([(i-r[0]) % r[2] == 0 for i,r in zip(idx, srg)]):
-                        in_range = False
-                        break
-
-                pidx = functor.eval_index(idx, sidx)
-
-                if pidx is None:
-                    in_range = False
-                    break
-
-                idx = pidx
-
-            if in_range:
-                for i,c in enumerate(cidx):
-                    vs[i].add(c)
-
-        # slices generation
-        # TODO: handle step > 1
-        num = [len(v) for v in vs]
-        if all([n > 0 for n in num]):
-            base = [min(v) for v in vs]
-            rg = [(b,n,1) for b,n in zip(base, num)]
-            ret.append((rg, phases))
-    return ret
+from .expression import *
+from .transpiler import *
+from .common import *
 
 class Data(list):
-    acc = 0
+    auto_id = 0
     def __init__(self, a, name=None):
         super().__init__(a)
-        self.id = Data.acc
-        Data.acc += 1
+        self.id = Data.auto_id
+        Data.auto_id += 1
         self.name = name
         self.dtype = get_list_type(a)
 
@@ -344,11 +64,25 @@ class Shape():
         raise ValueError(f"Invalid shape {shape}")
 
 class Functor():
-    acc = 0
-    def __init__(self, shape, partitions=None, dtype=None, vexpr=None, iexpr=None, sexpr=None, data=None, subs=[], desc=None, name=None, buffer=None, src_func=None):
+    auto_id = 0
+    def __init__(self,
+            shape,
+            partitions = None,
+            dtype = None,
+            vexpr = None,
+            iexpr = None,
+            sexpr = None,
+            data = None,
+            subs = [],
+            desc = None,
+            name = None,
+            buffer = None,
+            src_func = None,
+            is_contiguous = False,
+        ):
         # external perspective
-        self.id = Functor.acc
-        Functor.acc += 1
+        self.id = Functor.auto_id
+        Functor.auto_id += 1
         self.shape = Shape(shape)
         self.partitions = partitions
         self.dtype = dtype
@@ -369,10 +103,11 @@ class Functor():
             self.data = None
         self.subs = subs # sub functors
 
-        # runtime
-        self.generated = False
-        self.eval_cached = None
-        self.src_func = src_func
+        # internal
+        self._ndaf_src_func = src_func
+        self._ndaf_is_contiguous = is_contiguous
+        self._ndaf_requested_contiguous = False
+        self._ndaf_eval_cached = None
 
     def __str__(self):
         return self.__repr__()
@@ -431,6 +166,9 @@ class Functor():
         for i,s in enumerate(self.subs or []):
             s.print(indent+1, suffix="[{}]".format(i))
 
+    def ndaf_is_contiguous(self):
+        return self._ndaf_is_contiguous or self._ndaf_requested_contiguous
+
     def eval_index(self, index, sidx=None):
         fidx = None
         if self.iexpr is None:
@@ -463,7 +201,7 @@ class Functor():
                 raise
 
     def eval(self):
-        if self.eval_cached is None:
+        if self._ndaf_eval_cached is None:
             import numpy
             data = numpy.zeros(self.shape)
             if self.partitions:
@@ -502,40 +240,22 @@ class Functor():
                         data[pidx] = v
                     else:
                         self.eval_scatter(data, pidx, self.sexpr, v)
-            self.eval_cached = data
-        return self.eval_cached
+            self._ndaf_eval_cached = data
+        return self._ndaf_eval_cached
 
     def build_cfg(self, ctx=None):
         if ctx is None:
             ctx = CFG(self)
 
-        paths = self.build_blocks()
+        paths = build_blocks(self)
         paths = tailor_shape(paths)
         for path in paths:
             build_cfg(ctx, path)
         return ctx
 
-    def build_blocks(self):
-        paths = []
-        rg = self.shape.shape
-
-        if self.partitions:
-            for i,_ in enumerate(self.partitions):
-                for brg,bpath in self.subs[i].build_blocks():
-                    paths.append((brg, bpath+[(self, i)]))
-        else:
-            for i in range(len(self.subs)):
-                for brg,bpath in self.subs[i].build_blocks():
-                    paths.append((brg, bpath+[(self, i)]))
-
-        if not paths:
-            paths.append((rg, [(self, 0)]))
-
-        return paths
-
     def get_name(self):
         if self.name is None:
-            self.name = f"tensor{self.id}"
+            self.name = f"array{self.id}"
         return self.name
 
     def get_type(self):
@@ -544,7 +264,7 @@ class Functor():
 
         return "f"
 
-    def jit(self, *args, cflags=["-O2"]):
+    def jit(self, *args, cflags=["-O3"]):
         import sys
         import subprocess
         import ctypes
@@ -604,5 +324,6 @@ class Buffer(Functor):
             vexpr = ["buf", ["i0"]],
             buffer = data,
             name = name,
-            desc = f"buffer_{name}"
+            desc = f"buffer_{name}",
+            is_contiguous = True
         )

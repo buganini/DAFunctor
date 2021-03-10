@@ -3,7 +3,7 @@ from ..pytyping import *
 
 def add(a, b):
     def add_with_number(f, n):
-        if f.src_func is add:
+        if f._ndaf_src_func is add:
             f.vexpr[1].append(n)
             return f
         else:

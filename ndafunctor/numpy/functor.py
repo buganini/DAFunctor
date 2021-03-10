@@ -54,7 +54,6 @@ class NumpyFunctor(Functor):
         else:
             raise TypeError("Invalid index type")
 
-
     def __add__(self, a):
         from .math import add
         return add(self, a)
