@@ -61,16 +61,14 @@ def build_cfg(ctx, path):
         if functor.partitions:
             if functor.iexpr:
                 for d,iexpr in enumerate(functor.iexpr):
-                    scope.append(["val","i", ["idx", d, scope.depth, idepth+1], build_ast(scope, Expr(iexpr), sidx, functor.subs[sidx], idepth)])
+                    scope.append(["val","i", ["idx", d, scope.depth, idepth+1], build_ast(scope, Expr(iexpr), sidx, functor.subs[sidx], idepth, value)])
                 idepth += 1
         else:
             if functor.iexpr:
                 for d,iexpr in enumerate(functor.iexpr):
-                    scope.append(["val", "i", ["idx", d, scope.depth, idepth+1], build_ast(scope, Expr(iexpr), sidx, functor.subs[sidx], idepth)])
+                    scope.append(["val", "i", ["idx", d, scope.depth, idepth+1], build_ast(scope, Expr(iexpr), sidx, functor.subs[sidx], idepth, value)])
                 idepth += 1
-            next_value = build_ast(scope, Expr(functor.vexpr), sidx, functor, idepth)
-            if not next_value is None:
-                value = next_value
+            value = build_ast(scope, Expr(functor.vexpr), sidx, functor, idepth, value)
 
         output = False
 
@@ -87,16 +85,16 @@ def build_cfg(ctx, path):
                 raise AssertionError("value is None")
             scope.append(["=", functor, value, idepth, scope.depth])
 
-def build_ast(ctx, expr, sidx, functor, depth):
+def build_ast(ctx, expr, sidx, functor, depth, value):
     op = expr.op
     if type(op) in (int, float):
         return op
     elif op in ("+","-","*","//","/","%"):
-        args = [build_ast(ctx, e, sidx, functor, depth) for e in expr]
+        args = [build_ast(ctx, e, sidx, functor, depth, value) for e in expr]
         return [op, args]
     elif op == "ref":
-        ref_a = build_ast(ctx, expr[0], sidx, functor, depth)
-        ref_b = build_ast(ctx, expr[1], sidx, functor, depth)
+        ref_a = build_ast(ctx, expr[0], sidx, functor, depth, value)
+        ref_b = build_ast(ctx, expr[1], sidx, functor, depth, value)
         if type(ref_b) is list:
             ref_b = tuple(ref_b)
         return ["ref", ref_a, ref_b]
@@ -122,11 +120,11 @@ def build_ast(ctx, expr, sidx, functor, depth):
                 axis.append(["*", [f"i{i}"]+[s for s in functor.shape[i+1:]]])
             return ["ref", functor.get_name(), ["+", axis]]
         elif not s.vexpr is None:
-            return build_ast(ctx, Expr(s.vexpr), i, s, depth)
+            return build_ast(ctx, Expr(s.vexpr), i, s, depth, value)
         else:
-            return None
+            return value
     elif op == "buf":
-        buf_idx = build_ast(ctx, expr[0], sidx, functor, depth)
+        buf_idx = build_ast(ctx, expr[0], sidx, functor, depth, value)
         return ["ref", functor.name, buf_idx]
     else:
         raise NotImplementedError("Invalid token {}".format(op))

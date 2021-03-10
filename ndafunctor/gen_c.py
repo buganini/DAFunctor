@@ -8,6 +8,9 @@ def gen_c_expr(scope, expr, output, indent=0):
     if type(expr) in (str, int, float):
         return str(expr)
 
+    if expr is None:
+        raise AssertionError("Expr is None")
+
     if expr[0] == "for_shape":
         shape = expr[1]
         scope_depth = expr[2]
