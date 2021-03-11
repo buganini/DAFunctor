@@ -93,7 +93,7 @@ def gen_c_expr(scope, expr, output, indent=0):
         name = functor.get_name()
         size = ' * '.join([str(x) for x in functor.shape])
         output.write(" "*indent*intent_spaces)
-        output.write(f"AUTOBUF {dtype} {name}[{size}];\n")
+        output.write(f"AUTOBUF {dtype} {name}[{size}]; // {list(functor.shape)}\n")
         return indent
 
     elif expr[0] == "val":

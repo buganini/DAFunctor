@@ -38,8 +38,14 @@ class CFG():
 
 def split_graph(functor):
     ret = []
-    for f in functor.subs:
-        ret.extend(split_graph(f))
+    if functor.ndaf_is_joiner():
+        for f in functor.subs:
+            f._ndaf_requested_contiguous = True
+            if not f._ndaf_is_contiguous:
+                ret.append(f)
+    else:
+        for f in functor.subs:
+            ret.extend(split_graph(f))
     if functor._ndaf_requested_contiguous and not functor._ndaf_is_contiguous:
         ret.append(functor)
     return ret
@@ -197,7 +203,7 @@ def build_blocks(functor, target):
             for i,_ in enumerate(functor.partitions):
                 for brg,bpath in build_blocks(functor.subs[i], target):
                     paths.append((brg, bpath+[(functor, i)]))
-        else:
+        elif not functor.ndaf_is_joiner():
             for i in rangel(functor.subs):
                 for brg,bpath in build_blocks(functor.subs[i], target):
                     paths.append((brg, bpath+[(functor, i)]))

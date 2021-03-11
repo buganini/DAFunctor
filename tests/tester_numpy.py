@@ -27,7 +27,7 @@ def test_func(test, f, *args, params=tuple(), **kwargs):
         symbols.print()
         print(f"\x1b[1;31meval failed\x1b[m: {test}")
         raise
-    if not np.array_equal(golden, ev):
+    if not np.allclose(golden, ev):
         print("Golden", golden)
         print("Eval", ev)
         symbols.print()
@@ -50,7 +50,7 @@ def test_func(test, f, *args, params=tuple(), **kwargs):
     except:
         print(f"\x1b[1;31mjit function invocation failed\x1b[m: {test}")
 
-    if not np.array_equal(golden, cv):
+    if not np.allclose(golden, cv):
         symbols.print()
         try:
             symbols.build_cfg().print()

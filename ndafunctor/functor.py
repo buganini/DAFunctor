@@ -166,11 +166,18 @@ class Functor():
             print(" "*(indent+1)*indent__num, end="")
             print("data={}".format(self.data))
 
+        if self.ndaf_is_joiner():
+            print(" "*(indent+1)*indent__num, end="")
+            print("joiner")
+
         for i,s in enumerate(self.subs or []):
             s.print(indent+1, suffix="[{}]".format(i))
 
     def ndaf_is_contiguous(self):
         return self._ndaf_is_contiguous or self._ndaf_requested_contiguous
+
+    def ndaf_is_joiner(self):
+        return len(self.subs) > 1 and not self.partitions
 
     def eval_index(self, index, sidx=None):
         fidx = None
