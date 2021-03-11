@@ -4,3 +4,9 @@ def ranger(rg):
 
 def rangel(a):
     return range(len(a))
+
+def array_close(a, b):
+    import numpy
+    if tuple(a.shape) != tuple(b.shape):
+        return False
+    return numpy.allclose(a, b)

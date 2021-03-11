@@ -3,6 +3,7 @@ import os
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 import numpy as np
 import ndafunctor.numpy as nf
+from ndafunctor.common import *
 from pygments import highlight
 from pygments.formatters import TerminalFormatter as Formatter
 from pygments.lexers import CLexer as Lexer
@@ -27,7 +28,7 @@ def test_func(test, f, *args, params=tuple(), **kwargs):
         symbols.print()
         print(f"\x1b[1;31meval failed\x1b[m: {test}")
         raise
-    if not np.allclose(golden, ev):
+    if not array_close(golden, ev):
         print("Golden", golden)
         print("Eval", ev)
         symbols.print()
@@ -50,7 +51,7 @@ def test_func(test, f, *args, params=tuple(), **kwargs):
     except:
         print(f"\x1b[1;31mjit function invocation failed\x1b[m: {test}")
 
-    if not np.allclose(golden, cv):
+    if not array_close(golden, cv):
         symbols.print()
         try:
             symbols.build_cfg().print()
