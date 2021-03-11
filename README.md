@@ -48,6 +48,8 @@
     * [m:n,p:q]
     * [m:n:s,p:q:t]
 * slice assignment
+* dynamic content size
+    * boolean filter
 
 ## PyTorch
 * TBD
