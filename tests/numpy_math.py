@@ -24,3 +24,13 @@ def stack_transpose_add(np):
     return np.transpose(np.stack([np.array([[1,2],[4,5]]), np.array([[7,8],[10,11]])], axis=0), (1,0,2)) + 1
 
 test_func("stack_transpose_add", stack_transpose_add)
+
+def repeat_repeat_add(np):
+    return np.repeat(np.repeat(np.array([[1,2],[4,5]]), 3, axis=0), 2, axis=1) + 1
+
+test_func("repeat_repeat_add", repeat_repeat_add)
+
+def repeat_add_reshape_add_repeat_add(np):
+    return np.repeat(np.reshape(np.repeat(np.array([[1,2],[4,5]]), 3, axis=0) + 2, (3,4)) + 3, 2, axis=1) + 5
+
+test_func("repeat_add_reshape_add_repeat_add", repeat_add_reshape_add_repeat_add)
