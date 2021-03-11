@@ -35,6 +35,8 @@
 * slicing
     * [n]
     * [m:n]
+* math
+    * add
 
 # Todo
 ## Numpy
