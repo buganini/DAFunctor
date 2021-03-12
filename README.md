@@ -60,6 +60,9 @@
 ## Others
 * function decorator
 
+# License
+Both DAFunctor and its generated source codes are licensed under `GNU Lesser General Public License v3.0`.
+
 # Example
 ```
 >>> import dafunctor.numpy as nf
