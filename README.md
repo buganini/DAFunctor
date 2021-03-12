@@ -13,6 +13,7 @@
 * Pre-runtime safety check
 * Simple C code generation
 * No dependencies
+* Accountable JIT
 
 # Supported operations
 ## Numpy
