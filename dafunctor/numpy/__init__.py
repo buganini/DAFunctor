@@ -1,5 +1,5 @@
 from .creation import *
-from .manipulation import *
+from .manip import *
 from .math import *
 import math
 

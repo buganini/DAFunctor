@@ -2,8 +2,8 @@ import sys
 import os
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 import numpy as np
-import ndafunctor.numpy as nf
-from ndafunctor.common import *
+import dafunctor.numpy as nf
+from dafunctor.common import *
 from pygments import highlight
 from pygments.formatters import TerminalFormatter as Formatter
 from pygments.lexers import CLexer as Lexer

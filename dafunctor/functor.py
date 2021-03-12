@@ -106,13 +106,13 @@ class Functor():
         self.subs = subs # sub functors
 
         # internal
-        self._ndaf_src_func = src_func
-        self._ndaf_is_contiguous = is_contiguous
-        self._ndaf_requested_contiguous = False
-        self._ndaf_eval_cached = None
-        self._ndaf_exported = False
-        self._ndaf_is_output = False
-        self._ndaf_is_declared = False
+        self._daf_src_func = src_func
+        self._daf_is_contiguous = is_contiguous
+        self._daf_requested_contiguous = False
+        self._daf_eval_cached = None
+        self._daf_exported = False
+        self._daf_is_output = False
+        self._daf_is_declared = False
 
     def __str__(self):
         return self.__repr__()
@@ -168,17 +168,17 @@ class Functor():
             print(" "*(indent+1)*indent__num, end="")
             print("data={}".format(self.data))
 
-        if self.ndaf_is_joiner():
+        if self.daf_is_joiner():
             print(" "*(indent+1)*indent__num, end="")
             print("joiner")
 
         for i,s in enumerate(self.subs or []):
             s.print(indent+1, suffix="[{}]".format(i))
 
-    def ndaf_is_contiguous(self):
-        return self._ndaf_is_contiguous or self._ndaf_requested_contiguous
+    def daf_is_contiguous(self):
+        return self._daf_is_contiguous or self._daf_requested_contiguous
 
-    def ndaf_is_joiner(self):
+    def daf_is_joiner(self):
         return len(self.subs) > 1 and not self.partitions
 
     def eval_index(self, index, sidx=None):
@@ -213,7 +213,7 @@ class Functor():
                 raise
 
     def eval(self):
-        if self._ndaf_eval_cached is None:
+        if self._daf_eval_cached is None:
             import numpy
             data = numpy.zeros(self.shape)
             if self.partitions:
@@ -252,15 +252,15 @@ class Functor():
                         data[pidx] = v
                     else:
                         self.eval_scatter(data, pidx, self.sexpr, v)
-            self._ndaf_eval_cached = data
-        return self._ndaf_eval_cached
+            self._daf_eval_cached = data
+        return self._daf_eval_cached
 
     def build_cfg(self, ctx=None):
         if ctx is None:
             ctx = CFG(self)
 
-        self._ndaf_requested_contiguous = True
-        self._ndaf_is_output = True
+        self._daf_requested_contiguous = True
+        self._daf_is_output = True
         graphs = split_graph(self)
         for graph in graphs:
             paths = build_blocks(graph, graph)
@@ -270,10 +270,10 @@ class Functor():
             for path in paths:
                 functor = path[1][-1][0]
                 build_cfg(ctx, path)
-            if not functor._ndaf_is_output:
+            if not functor._daf_is_output:
                 ctx.append(["comment", f"end of {functor.get_name()}"])
                 ctx.append(["newline"])
-            graph._ndaf_exported = True
+            graph._daf_exported = True
         return ctx
 
     def get_name(self):

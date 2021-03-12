@@ -3,7 +3,7 @@ from ..pytyping import *
 
 def add(a, b):
     def add_with_number(f, n):
-        if f._ndaf_src_func is add:
+        if f._daf_src_func is add:
             f.vexpr[1].append(n)
             return f
         else:
@@ -22,7 +22,7 @@ def add(a, b):
     elif is_functor(a) and is_functor(b):
         if tuple(a.shape) != tuple(b.shape):
             raise AssertionError("array shape mismatch")
-        if a._ndaf_src_func is add:
+        if a._daf_src_func is add:
             a.vexpr[1].append(f"v{len(a.subs)}")
             a.subs.append(b)
             return  a

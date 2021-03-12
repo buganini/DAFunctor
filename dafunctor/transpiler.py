@@ -38,15 +38,15 @@ class CFG():
 
 def split_graph(functor):
     ret = []
-    if functor.ndaf_is_joiner():
+    if functor.daf_is_joiner():
         for f in functor.subs:
-            f._ndaf_requested_contiguous = True
-            if not f._ndaf_is_contiguous:
+            f._daf_requested_contiguous = True
+            if not f._daf_is_contiguous:
                 ret.append(f)
     else:
         for f in functor.subs:
             ret.extend(split_graph(f))
-    if functor._ndaf_requested_contiguous and not functor._ndaf_is_contiguous:
+    if functor._daf_requested_contiguous and not functor._daf_is_contiguous:
         ret.append(functor)
     return ret
 
@@ -58,8 +58,8 @@ def build_cfg(ctx, path):
     for depth, (functor, sidx) in enumerate(phases):
         if depth == 0:
             out = phases[-1][0]
-            if not out._ndaf_is_output and not out._ndaf_is_declared:
-                out._ndaf_is_declared = True
+            if not out._daf_is_output and not out._daf_is_declared:
+                out._daf_is_declared = True
                 scope.append(["autobuf", out])
             scope.append(["for_shape", rg, scope.depth + 1, idepth])
             scope = scope.enter()
@@ -122,7 +122,7 @@ def build_ast(ctx, expr, sidx, functor, depth, value):
     elif re.match("v[0-9]+", op):
         i = int(op[1:])
         s = functor.subs[i]
-        if functor._ndaf_exported:
+        if functor._daf_exported:
             axis = []
             for i in rangel(functor.shape):
                 axis.append(["*", [f"i{i}"]+[s for s in functor.shape[i+1:]]])
@@ -201,12 +201,12 @@ def build_blocks(functor, target):
     paths = []
     rg = functor.shape.shape
 
-    if functor is target or not functor.ndaf_is_contiguous():
+    if functor is target or not functor.daf_is_contiguous():
         if functor.partitions:
             for i,_ in enumerate(functor.partitions):
                 for brg,bpath in build_blocks(functor.subs[i], target):
                     paths.append((brg, bpath+[(functor, i)]))
-        elif not functor.ndaf_is_joiner():
+        elif not functor.daf_is_joiner():
             for i in rangel(functor.subs):
                 for brg,bpath in build_blocks(functor.subs[i], target):
                     paths.append((brg, bpath+[(functor, i)]))

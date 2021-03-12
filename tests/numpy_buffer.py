@@ -1,7 +1,7 @@
 import struct
 from tester_numpy import *
 import numpy
-from ndafunctor import Buffer
+from dafunctor import Buffer
 
 data1 = struct.pack("ffff", 0.1, 0.2, 0.3, 0.4)
 buf1  = Buffer("data1", "f", data1)

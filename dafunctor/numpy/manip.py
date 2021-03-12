@@ -13,7 +13,7 @@ def ascontiguousarray(a):
         desc = "ascontiguousarray",
         opdesc = "ascontiguousarray"
     )
-    r._ndaf_requested_contiguous = True
+    r._daf_requested_contiguous = True
     return r
 
 

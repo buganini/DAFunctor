@@ -3,7 +3,7 @@ from ..typing import *
 from ..pytyping import *
 from ..common import *
 from .functor import NumpyFunctor
-from .manipulation import *
+from .manip import *
 
 def _shape(data):
     try:

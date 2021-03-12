@@ -62,7 +62,7 @@
 
 # Example
 ```
->>> import ndafunctor.numpy as nf
+>>> import dafunctor.numpy as nf
 >>> s = nf.meshgrid([1,2],[3,4,5])
 >>> s.eval()
 array([[[1., 2.],
