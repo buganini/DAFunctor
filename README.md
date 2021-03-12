@@ -53,6 +53,10 @@
     * multiply
     * divide
     * reciprocal
+    * exponents and logarithms
+    * trigonometric functions
+    * hyperbolic functions
+* linalg
     * matmul
 * dynamic content size
     * boolean filter
