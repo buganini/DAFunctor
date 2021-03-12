@@ -38,8 +38,14 @@ def f_tuple2(np):
 
 test_func("slice_tuple_2", f_tuple2)
 
-def f_tuple_int(np):
+def f_tuple_mixed(np):
     a = [[[1],[2],[3]],[[4],[5],[6]]]
     return np.array(a)[1:,1]
 
-test_func("slice_tuple_2", f_tuple_int)
+test_func("slice_tuple_mixed", f_tuple_mixed)
+
+def f_tuple_mixed_step(np):
+    a = [[[1],[2],[3],[4],[5],[6]],[[7],[8],[9],[10],[11],[12]]]
+    return np.array(a)[1:,1::2]
+
+test_func("slice_tuple_mixed_step", f_tuple_mixed_step)

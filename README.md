@@ -33,20 +33,13 @@
     * concatenate
     * repeat
     * ascontiguousarray
-* slicing
-    * [n]
-    * [m:n]
-    * [m:n:s]
+* slicing (positive step)
 * math
     * add
 
 # Todo
 ## Numpy
-* slicing
-    * [m:n:-s]
-    * [m:n,p]
-    * [m:n,p:q]
-    * [m:n:s,p:q:t]
+* slicing (negative step)
 * slice assignment
 * math
     * subtract

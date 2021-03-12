@@ -1,58 +1,65 @@
 import math
 from .common import *
 
+def _getitem(cls, a, idx):
+    delcnt = 0
+
+    shape = [(0,s,1) for s in a.shape]
+    partitions = [(0,s,1) for s in a.shape]
+    iexpr = [f"i{i}" for i in rangel(a.shape)]
+
+    for i,s in enumerate(idx):
+        if isinstance(s, int):
+            shape.pop(i-delcnt)
+            partitions[i-delcnt] = (s,1,1)
+            iexpr.pop(i-delcnt)
+            delcnt += 1
+        elif isinstance(s, slice):
+            start = s.start
+            stop = s.stop
+            step = s.step or 1
+
+            if start is None:
+                start = 0
+            if stop is None:
+                stop = a.shape[i]
+
+            if start < 0:
+                start += a.shape[i]
+
+            if not (0 <= start and start < a.shape[i]):
+                raise IndexError()
+
+            while stop < 0:
+                stop += a.shape[i]
+
+            stop = min(stop, a.shape[i])
+            base = start
+
+            num = int(math.ceil((stop - start) / step))
+            shape[i-delcnt] = num
+            partitions[i] = (base,num,step)
+            if base != 0:
+                iexpr[i-delcnt] = ["-", [f"i{i}", base]]
+            if step != 1:
+                iexpr[i-delcnt] = ["//", [iexpr[i-delcnt], step]]
+        else:
+            raise TypeError("Invalid index type")
+    return cls(
+        shape,
+        partitions = [partitions],
+        iexpr = iexpr,
+        subs = [a],
+        desc = "{}[{}]".format(a.desc, idx),
+        opdesc = f"[{idx}]",
+    )
+
 def getitem(cls, a, idx):
     if isinstance(idx, tuple):
-        raise NotImplementedError("slice with tuple is not implemented")
+        return _getitem(cls, a, idx)
     elif isinstance(idx, slice):
-        start = idx.start
-        stop = idx.stop
-        step = idx.step or 1
-
-        raw_start = start
-        raw_stop = stop
-        while start < 0:
-            start += a.shape[0]
-        while stop < 0:
-            stop += a.shape[0]
-
-        stop = min(stop, a.shape[0])
-        base = start
-
-        num = int(math.ceil((stop - start) / step))
-        shape = list(a.shape)
-        shape[0] = num
-        partitions = [(0,s,1) for s in a.shape]
-        partitions[0] = (base,num,step)
-        iexpr = [f"i{i}" for i in rangel(a.shape)]
-        iexpr[0] = ["-", ["i0", base]]
-        if step != 1:
-            iexpr[0] = ["//", [iexpr[0], step]]
-        return cls(
-            shape,
-            partitions = [partitions],
-            iexpr = iexpr,
-            subs = [a],
-            desc = "{}[{}]".format(a.desc, idx),
-            opdesc = f"[{raw_start}:{raw_stop}:{step}]",
-        )
+        return _getitem(cls, a, tuple([idx]))
     elif isinstance(idx, int):
-        if idx < 0:
-            idx += a.shape[0]
-        if 0 <= idx and idx < len(a):
-            shape = list(a.shape[1:])
-            partitions = [(0,s,1) for s in a.shape]
-            partitions[0] = (idx,1,1)
-            iexpr = [f"i{i}" for i in range(1,len(a.shape))]
-            return cls(
-                shape,
-                partitions = [partitions],
-                iexpr = iexpr,
-                subs = [a],
-                desc = "{}[{}]".format(a.desc, idx),
-                opdesc = f"[{idx}]",
-            )
-        else:
-            raise IndexError()
+        return _getitem(cls, a, tuple([idx]))
     else:
         raise TypeError("Invalid index type")

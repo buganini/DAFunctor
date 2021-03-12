@@ -265,6 +265,8 @@ class Functor():
         for graph in graphs:
             paths = build_blocks(graph, graph)
             paths = tailor_shape(paths)
+            if not paths:
+                continue
             for path in paths:
                 functor = path[1][-1][0]
                 build_cfg(ctx, path)
