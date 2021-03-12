@@ -268,6 +268,7 @@ class Functor():
                 build_cfg(ctx, path)
             if not functor._ndaf_is_output:
                 ctx.append(["comment", f"end of {functor.get_name()}"])
+                ctx.append(["newline"])
             graph._ndaf_exported = True
         return ctx
 

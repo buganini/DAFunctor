@@ -136,7 +136,11 @@ def gen_c_expr(scope, expr, output, indent=0):
     elif expr[0] == "comment":
         output.write("\n");
         output.write(" "*indent*intent_spaces)
-        output.write(f"// {expr[1]}\n\n");
+        output.write(f"// {expr[1]}\n");
+        return indent
+
+    elif expr[0] == "newline":
+        output.write("\n")
         return indent
 
     elif expr[0] == "func":
