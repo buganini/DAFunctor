@@ -13,6 +13,7 @@
 * Pre-runtime safety check
 * Simple C code generation
 * No dependencies
+* Pure Python, less compatibility issue
 * Accountable JIT
 
 # Supported operations
@@ -63,6 +64,9 @@
 
 ## PyTorch
 * TBD
+
+## Others
+* function decorator
 
 # Example
 ```
