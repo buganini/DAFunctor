@@ -8,8 +8,8 @@
 # Advantages
 * Small memory footprint (minimal intermediate buffers, no manual handling required)
 * No memory management
-* No unnecessary `if` in loop
-* Side-by-side comparison with numpy results
+* No unnecessary `if` in the loop
+* Side-by-side comparison with NumPy results
 * Pre-runtime safety check
 * No dependencies
 * Pure Python, less compatibility issue
