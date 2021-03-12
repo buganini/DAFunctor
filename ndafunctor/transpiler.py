@@ -188,11 +188,12 @@ def tailor_shape(paths):
                     vs[i].add(c)
 
         # slices generation
-        # TODO: handle step > 1
+        vs = [sorted(list(v)) for v in vs]
         num = [len(v) for v in vs]
         if all([n > 0 for n in num]):
             base = [min(v) for v in vs]
-            rg = [(b,n,1) for b,n in zip(base, num)]
+            step = [v[1]-v[0] if len(v) > 1 else 1 for v in vs]
+            rg = list(zip(base, num, step))
             ret.append((rg, phases))
     return ret
 
