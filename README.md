@@ -11,10 +11,9 @@
 * No unnecessary `if` in loop
 * Side-by-side comparison with numpy results
 * Pre-runtime safety check
-* Simple C code generation
 * No dependencies
 * Pure Python, less compatibility issue
-* Accountable JIT
+* Accountable JIT: Simple C code generation
 
 # Supported operations
 ## Numpy

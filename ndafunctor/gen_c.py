@@ -188,7 +188,7 @@ def gen_c_expr(scope, expr, output, indent=0):
 def gen_func(ctx, output):
     output.write("#include <stdio.h>\n")
     output.write("#include <math.h>\n")
-    output.write("#define AUTOBUF\n")
+    output.write("#define AUTOBUF // put static here if your algorithms run with only one instance\n")
     output.write("\n")
 
     indent = 0
