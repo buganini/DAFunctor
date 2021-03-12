@@ -42,14 +42,18 @@
 
 # Todo
 ## Numpy
-* elementwise operations (with value)
-* elementwise operations (with NDArray)
 * slicing
     * [m:n:-s]
     * [m:n,p]
     * [m:n,p:q]
     * [m:n:s,p:q:t]
 * slice assignment
+* math
+    * subtract
+    * multiply
+    * divide
+    * reciprocal
+    * matmul
 * dynamic content size
     * boolean filter
 
