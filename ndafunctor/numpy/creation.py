@@ -54,28 +54,32 @@ def array(data):
         shape,
         vexpr = ["ref", ["d", vexpr]],
         data = Data(_flatten(data), "array"),
-        desc = f"array({str(shape)})"
+        desc = f"array({str(shape)})",
+        opdesc = f"array()",
     )
 
 def zeros(shape):
     return NumpyFunctor(
         shape,
         vexpr = 0,
-        desc = "zeros"
+        desc = "zeros",
+        opdesc = f"zeros({shape})",
     )
 
 def ones(shape):
     return NumpyFunctor(
         shape,
         vexpr = 1,
-        desc = "ones"
+        desc = "ones",
+        opdesc = f"ones({shape})",
     )
 
 def full(shape, fill_value):
     return NumpyFunctor(
         shape,
         vexpr = fill_value,
-        desc = "full"
+        desc = "full",
+        opdesc = f"full({shape}, {fill_value})",
     )
 
 def arange(*args):
@@ -101,7 +105,8 @@ def arange(*args):
         shape,
         vexpr = ["+",["d0",["*",["i0","d2"]]]], # start + i * step
         data = data,
-        desc = "arange"
+        desc = "arange",
+        opdesc = f"arange({start}, {end}, {step})",
     )
 
 def raw_meshgrid(*args):
@@ -145,7 +150,8 @@ def raw_meshgrid(*args):
         partitions = partitions,
         iexpr = iexpr,
         subs = subs,
-        desc = "raw_meshgrid"
+        desc = "raw_meshgrid",
+        opdesc = f"raw_meshgrid",
     )
 
 def meshgrid(*args):

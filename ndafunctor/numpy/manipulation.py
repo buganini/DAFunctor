@@ -10,7 +10,8 @@ def ascontiguousarray(a):
         a.shape,
         vexpr = "v0",
         subs = [a],
-        desc = "ascontiguousarray"
+        desc = "ascontiguousarray",
+        opdesc = "ascontiguousarray"
     )
     r._ndaf_requested_contiguous = True
     return r
@@ -24,6 +25,7 @@ def transpose(functor, dims):
         partitions = [[(0,s,1) for s in functor.shape]],
         iexpr = iexpr,
         desc = f"transposed_{functor.desc}",
+        opdesc = f"transpose({dims})",
         subs = [functor]
     )
 
@@ -58,6 +60,7 @@ def reshape(a, shape):
         partitions = [[(0,s,1) for s in a.shape]],
         iexpr = iexpr,
         desc = f"reshape({shape})_{a.desc}",
+        opdesc = f"reshape({shape})",
         subs = [a]
     )
 
@@ -77,6 +80,7 @@ def stack(array, axis=0):
         partitions = partitions,
         iexpr = iexpr,
         desc = f"stack_{axis}",
+        opdesc = f"stack(axis={axis})",
         subs = array
     )
 
@@ -98,6 +102,7 @@ def concatenate(array, axis=0):
         partitions = partitions,
         iexpr = iexpr,
         desc = "concatenate",
+        opdesc = f"concatenate(axis={axis})",
         subs = array
     )
 
@@ -111,6 +116,7 @@ def expand_dims(a, axis):
         partitions = [[(0,s,1) for s in a.shape]],
         iexpr = iexpr,
         desc = f"expand_dims_{axis}_{a.desc}",
+        opdesc = f"expand_dims(axis={axis})",
         subs = [a]
     )
 
@@ -129,6 +135,7 @@ def repeat(a, repeats, axis=None):
                 iexpr = iexpr,
                 sexpr = sexpr,
                 desc = f"repeat_{repeats}",
+                opdesc = f"repeat({repeats})",
                 subs = [flt]
             )
         else:
@@ -143,6 +150,7 @@ def repeat(a, repeats, axis=None):
                 iexpr = iexpr,
                 sexpr = sexpr,
                 desc = f"repeat_{repeats}",
+                opdesc = f"repeat({repeats})",
                 subs = [a]
             )
     else:
@@ -150,5 +158,6 @@ def repeat(a, repeats, axis=None):
         return NumpyFunctor(
             shape,
             desc = f"repeat_{repeats}",
+            opdesc = f"repeat({repeats})",
             vexpr = a
         )

@@ -32,7 +32,8 @@ class NumpyFunctor(Functor):
                 partitions = [partitions],
                 iexpr = iexpr,
                 subs = [self],
-                desc = "{}[{}]".format(self.desc, idx)
+                desc = "{}[{}]".format(self.desc, idx),
+                opdesc = f"[{idx}]",
             )
         elif isinstance(idx, int):
             if idx < 0:
@@ -47,7 +48,8 @@ class NumpyFunctor(Functor):
                     partitions = [partitions],
                     iexpr = iexpr,
                     subs = [self],
-                    desc = "{}[{}]".format(self.desc, idx)
+                    desc = "{}[{}]".format(self.desc, idx),
+                    opdesc = f"[{idx}]",
                 )
             else:
                 raise IndexError()

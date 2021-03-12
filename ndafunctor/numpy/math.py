@@ -12,6 +12,7 @@ def add(a, b):
                 vexpr=["+", ["v0",n]],
                 subs=[f],
                 desc="add",
+                opdesc="add",
                 src_func=add
             )
     if is_number(a) and is_functor(b):
@@ -31,6 +32,7 @@ def add(a, b):
                 vexpr=["+", ["v0","v1"]],
                 subs=[a, b],
                 desc="add",
+                opdesc="add",
                 src_func=add
             )
     raise NotImplementedError(f"add({type(a), type(b)})")

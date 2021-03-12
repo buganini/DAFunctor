@@ -75,6 +75,7 @@ class Functor():
             data = None,
             subs = [],
             desc = None,
+            opdesc = None,
             name = None,
             buffer = None,
             src_func = None,
@@ -87,6 +88,7 @@ class Functor():
         self.partitions = partitions
         self.dtype = dtype
         self.desc = desc
+        self.opdesc = opdesc
         self.name = name
         self.buffer = buffer
 

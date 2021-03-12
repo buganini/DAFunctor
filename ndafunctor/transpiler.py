@@ -66,13 +66,13 @@ def build_cfg(ctx, path):
 
         if functor.partitions:
             if functor.iexpr:
-                scope.append(["comment", functor.desc])
+                scope.append(["comment", functor.opdesc])
                 for d,iexpr in enumerate(functor.iexpr):
                     scope.append(["val","i", ["idx", d, scope.depth, idepth+1], build_ast(scope, Expr(iexpr), sidx, functor.subs[sidx], idepth, value)])
                 idepth += 1
         else:
             if functor.iexpr:
-                scope.append(["comment", functor.desc])
+                scope.append(["comment", functor.opdesc])
                 for d,iexpr in enumerate(functor.iexpr):
                     scope.append(["val", "i", ["idx", d, scope.depth, idepth+1], build_ast(scope, Expr(iexpr), sidx, functor.subs[sidx], idepth, value)])
                 idepth += 1
