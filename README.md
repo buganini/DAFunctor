@@ -109,8 +109,9 @@ Functor: #3 tensor3
 >>> print(open(f.source).read())
 #include <stdio.h>
 #include <math.h>
+#define AUTOBUF
 
-void gen_tensor3(float * tensor3 /* [2, 3, 2]=12 */)
+void gen_array3(float * array3 /* [2, 3, 2]=12 */)
 {
     const static int d_meshgrid_0[] = {1,2};
     const static int d_meshgrid_1[] = {3,4,5};
@@ -118,24 +119,32 @@ void gen_tensor3(float * tensor3 /* [2, 3, 2]=12 */)
     for(int i0=0;i0<2;i0+=1)
       for(int i1=0;i1<3;i1+=1)
     {
+
+        // raw_meshgrid
         const int i0_0_1 = 0;
         const int i1_0_1 = i0;
         const int i2_0_1 = i1;
+
+        // transpose([0, 2, 1])
         const int i0_0_2 = i0_0_1;
         const int i1_0_2 = i2_0_1;
         const int i2_0_2 = i1_0_1;
-        tensor3[i0_0_2*3*2 + i1_0_2*2 + i2_0_2] = d_meshgrid_0[i0];
+        array3[i0_0_2*3*2 + i1_0_2*2 + i2_0_2] = d_meshgrid_0[i0];
     }
     for(int i0=0;i0<2;i0+=1)
       for(int i1=0;i1<3;i1+=1)
     {
+
+        // raw_meshgrid
         const int i0_0_1 = 1;
         const int i1_0_1 = i0;
         const int i2_0_1 = i1;
+
+        // transpose([0, 2, 1])
         const int i0_0_2 = i0_0_1;
         const int i1_0_2 = i2_0_1;
         const int i2_0_2 = i1_0_1;
-        tensor3[i0_0_2*3*2 + i1_0_2*2 + i2_0_2] = d_meshgrid_1[i1];
+        array3[i0_0_2*3*2 + i1_0_2*2 + i2_0_2] = d_meshgrid_1[i1];
     }
 }
 ```
