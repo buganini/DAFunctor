@@ -1,5 +1,6 @@
 from ..functor import Functor, Data
 from ..common import *
+from ..manip import *
 from .functor import NumpyFunctor
 from ..pytyping import *
 from ..ast import strip as ast_strip
@@ -9,7 +10,7 @@ def ascontiguousarray(a):
     r = NumpyFunctor(
         a.shape,
         vexpr = "v0",
-        subs = [a],
+        subs = [clone(NumpyFunctor, a)],
         desc = "ascontiguousarray",
         opdesc = "ascontiguousarray"
     )

@@ -9,6 +9,9 @@ class NumpyFunctor(Functor):
     def __getitem__(self, idx):
         return manip.getitem(NumpyFunctor, self, idx)
 
+    def __setitem__(self, idx, value):
+        return manip.setitem(NumpyFunctor, self, idx, value)
+
     def __add__(self, a):
         from .math import add
         return add(self, a)

@@ -108,6 +108,7 @@ class Functor():
         # internal
         self._daf_src_func = src_func
         self._daf_is_contiguous = is_contiguous
+
         self._daf_requested_contiguous = False
         self._daf_eval_cached = None
         self._daf_exported = False
@@ -190,6 +191,8 @@ class Functor():
                 eval_expr(self, Expr(iexpr, self, i), index, sidx)
                 for i,iexpr in enumerate(self.iexpr)
             ])
+        if fidx is None:
+            return None
         fidx = [(f-s[0]) for f,s in zip(fidx,self.shape.shape)]
         if not all([(f >= 0) for f,s in zip(fidx,self.shape.shape)]):
             return None
@@ -219,28 +222,54 @@ class Functor():
             if self.partitions:
                 for sidx, rg in enumerate(self.partitions):
                     functor = self.subs[sidx]
-                    for idx in ranger(rg):
-                        pidx = self.eval_index(idx, sidx)
-                        if pidx is None:
-                            continue
-                        v = functor.eval()
-                        if self.sexpr is None:
-                            try:
-                                data[pidx] = v[idx]
-                            except:
-                                print("===== DEBUG ======")
-                                print("Sub-Functor", functor)
-                                print("iexpr")
-                                for e in self.iexpr:
-                                    print(" ", e)
-                                print("sidx",sidx)
-                                print("idx",idx)
-                                print("pidx",pidx)
-                                print("data.shape", data.shape)
-                                print("==================")
-                                raise
-                        else:
-                            self.eval_scatter(data, pidx, self.sexpr, v[idx])
+                    if rg: # sub-element is a functor
+                        for idx in ranger(rg):
+                            pidx = self.eval_index(idx, sidx)
+                            if pidx is None:
+                                continue
+                            v = functor.eval()
+                            if self.sexpr is None:
+                                try:
+                                    data[pidx] = v[idx]
+                                except:
+                                    print("===== DEBUG ======")
+                                    print("Sub-Functor", functor)
+                                    if self.iexpr:
+                                        print("iexpr")
+                                        for e in self.iexpr:
+                                            print(" ", e)
+                                    print("sidx",sidx)
+                                    print("idx",idx)
+                                    print("v.shape", v.shape)
+                                    print("pidx",pidx)
+                                    print("data.shape", data.shape)
+                                    print("==================")
+                                    raise
+                            else:
+                                self.eval_scatter(data, pidx, self.sexpr, v[idx])
+                    else: # sub-element is a scalar value
+                        pidx = self.eval_index(None, sidx)
+                        if not pidx is None:
+                            v = functor.eval()
+                            if self.sexpr is None:
+                                try:
+                                    data[pidx] = v
+                                except:
+                                        print("===== DEBUG ======")
+                                        print("Sub-Functor", functor)
+                                        if self.iexpr:
+                                            print("iexpr")
+                                            for e in self.iexpr:
+                                                print(" ", e)
+                                        print("sidx",sidx)
+                                        print("idx",idx)
+                                        print("v", v)
+                                        print("pidx",pidx)
+                                        print("data.shape", data.shape)
+                                        print("==================")
+                                        raise
+                            else:
+                                self.eval_scatter(data, pidx, self.sexpr, v)
             else:
                 rg = [(0,s,1) for s in self.shape]
                 for idx in ranger(rg):
