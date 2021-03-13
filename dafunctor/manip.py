@@ -11,7 +11,7 @@ def _getitem(cls, a, idx):
     for i,s in enumerate(idx):
         if isinstance(s, int):
             shape.pop(i-delcnt)
-            partitions[i-delcnt] = (s,1,1)
+            partitions[i] = (s,1,1)
             iexpr.pop(i-delcnt)
             delcnt += 1
         elif isinstance(s, slice):
@@ -26,9 +26,6 @@ def _getitem(cls, a, idx):
 
             if start < 0:
                 start += a.shape[i]
-
-            if not (0 <= start and start < a.shape[i]):
-                raise IndexError()
 
             while stop < 0:
                 stop += a.shape[i]
@@ -45,7 +42,7 @@ def _getitem(cls, a, idx):
                 iexpr[i-delcnt] = ["//", [iexpr[i-delcnt], step]]
         else:
             raise TypeError("Invalid index type")
-    return cls(
+    f = cls(
         shape,
         partitions = [partitions],
         iexpr = iexpr,
@@ -53,6 +50,7 @@ def _getitem(cls, a, idx):
         desc = "{}[{}]".format(a.desc, idx),
         opdesc = f"[{idx}]",
     )
+    return f
 
 def getitem(cls, a, idx):
     if isinstance(idx, tuple):

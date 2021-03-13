@@ -44,6 +44,18 @@ def f_tuple_mixed(np):
 
 test_func("getitem_tuple_mixed", f_tuple_mixed)
 
+def f_tuple_mixed2(np):
+    a = [[[[1,10,100]],[[2,20,200]],[[3,30,300]]],[[[4,40,400]],[[5,50,500]],[[6,60,600]]]]
+    return np.array(a)[1,0,1:]
+
+test_func("getitem_tuple_mixed2", f_tuple_mixed2)
+
+def f_tuple_mixed3(np):
+    a = [[[[1,10,100]],[[2,20,200]],[[3,30,300]]],[[[4,40,400]],[[5,50,500]],[[6,60,600]]]]
+    return np.array(a)[1,0,0,1:]
+
+test_func("getitem_tuple_mixed3", f_tuple_mixed3)
+
 def f_tuple_mixed_step(np):
     a = [[[1],[2],[3],[4],[5],[6]],[[7],[8],[9],[10],[11],[12]]]
     return np.array(a)[1:,1::2]
