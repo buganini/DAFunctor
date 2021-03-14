@@ -133,9 +133,17 @@ def _setitem(cls, a, idx, value):
             num = int(math.ceil((stop - start) / step))
             vshape[i-delcnt] = (0,num,1)
 
-            viexpr.append(f"i{vcnt}")
+            viexpr.append(["+",[start, ["*", [f"i{vcnt}", step]]]])
             vcnt += 1
-            raise NotImplementedError()
+
+            if s == 0:
+                before = None
+            else:
+                before = (0, start, 1)
+            if a.shape[i]-(stop) == 0:
+                after = None
+            else:
+                after = (stop, a.shape[i]-(stop), 1)
         else:
             raise TypeError("Invalid index type")
 

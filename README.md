@@ -34,14 +34,14 @@
     * repeat
     * ascontiguousarray
 * slicing (positive step)
-* slice assignment (with integer index)
+* slice assignment (step=1)
 * math
     * add
 
 # Todo
 ## Numpy
 * slicing (negative step)
-* slice assignment (with slice index)
+* slice assignment (step!=1)
 * math
     * subtract
     * multiply
