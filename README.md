@@ -54,6 +54,7 @@
     * matmul
 * dynamic content size
     * boolean filter
+* masking (or not?)
 
 ## PyTorch
 * TBD
@@ -61,6 +62,7 @@
 ## Others
 * zero-dimentional value
 * function decorator
+* loop fusion ?
 
 # License
 Both DAFunctor and its generated source codes are licensed under `GNU Lesser General Public License v3.0`.
