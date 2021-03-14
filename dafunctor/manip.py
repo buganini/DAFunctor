@@ -21,6 +21,19 @@ def clone(cls, a):
     )
     return f
 
+def transpose(cls, functor, dims):
+    iexpr = [f"i{axis}" for axis in dims]
+    shape = [functor.shape[dims[i]] for i in rangel(functor.shape)]
+    return cls(
+        shape,
+        partitions = [[(0,s,1) for s in functor.shape]],
+        iexpr = iexpr,
+        desc = f"transposed_{functor.desc}",
+        opdesc = f"transpose({dims})",
+        subs = [functor]
+    )
+
+
 def _getitem(cls, a, idx):
     delcnt = 0
 

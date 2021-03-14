@@ -1,8 +1,9 @@
 from ..functor import Functor, Data
 from ..common import *
-from ..manip import *
+from .. import manip
 from .functor import NumpyFunctor
 from ..pytyping import *
+from .. import manip
 from ..ast import strip as ast_strip
 import functools
 
@@ -10,7 +11,7 @@ def ascontiguousarray(a):
     r = NumpyFunctor(
         a.shape,
         vexpr = "v0",
-        subs = [clone(NumpyFunctor, a)],
+        subs = [manip.clone(NumpyFunctor, a)],
         desc = "ascontiguousarray",
         opdesc = "ascontiguousarray"
     )
@@ -19,16 +20,7 @@ def ascontiguousarray(a):
 
 
 def transpose(functor, dims):
-    iexpr = [f"i{axis}" for axis in dims]
-    shape = [functor.shape[dims[i]] for i in rangel(functor.shape)]
-    return NumpyFunctor(
-        shape,
-        partitions = [[(0,s,1) for s in functor.shape]],
-        iexpr = iexpr,
-        desc = f"transposed_{functor.desc}",
-        opdesc = f"transpose({dims})",
-        subs = [functor]
-    )
+    return manip.transpose(NumpyFunctor, functor, dims)
 
 def reshape(a, shape):
     offset = ["+",[

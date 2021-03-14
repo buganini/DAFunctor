@@ -37,6 +37,9 @@
 * slice assignment (step=1)
 * math
     * add
+## PyTorch
+* Tensor
+* permute
 
 # Todo
 ## Numpy
