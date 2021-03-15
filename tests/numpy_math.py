@@ -34,3 +34,13 @@ def repeat_add_reshape_add_repeat_add(np):
     return np.repeat(np.reshape(np.repeat(np.array([[1,2],[4,5]]), 3, axis=0) + 2, (3,4)) + 3, 2, axis=1) + 5
 
 test_func("repeat_add_reshape_add_repeat_add", repeat_add_reshape_add_repeat_add)
+
+def subtract1(np):
+    return np.subtract(np.array([[4,5],[6,7]]), 1)
+
+test_func("subtract1", subtract1)
+
+def subtract2(np):
+    return np.array([[4,5],[6,7]]) - 2
+
+test_func("subtract2", subtract2)
