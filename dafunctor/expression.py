@@ -118,6 +118,8 @@ def eval_expr(functor, expr, index=None, sidx=None):
             raise
     elif re.match("v[0-9]+", op):
         return functor.subs[int(op[1:])].eval()[index]
+    elif re.match("pass", op):
+        return functor.subs[0].eval()[index]
     elif op  == "buf":
         import struct
         if functor.buffer is None:

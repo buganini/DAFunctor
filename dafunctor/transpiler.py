@@ -130,16 +130,31 @@ def build_ast(ctx, expr, sidx, functor, depth, value):
         return ["idx", int(op[1:]), ctx.depth, depth]
     elif re.match("v[0-9]+", op):
         i = int(op[1:])
-        s = functor.subs[i]
-        if s._daf_exported:
+        sub = functor.subs[i]
+        if sub._daf_exported:
+            axis = []
+            for i in rangel(sub.shape):
+                axis.append(["*", [f"i{i}"]+[s for s in sub.shape[i+1:]]])
+            return ["ref", sub.get_name(), ["+", axis]]
+        elif not sub.vexpr is None:
+            return build_ast(ctx, Expr(sub.vexpr), i, sub, depth, value)
+        else:
+            if value is None:
+                print(f"subs[{i}]", sub)
+                raise AssertionError()
+            return value
+    elif op == "pass":
+        sub = functor.subs[0]
+        if functor._daf_exported:
             axis = []
             for i in rangel(functor.shape):
                 axis.append(["*", [f"i{i}"]+[s for s in functor.shape[i+1:]]])
             return ["ref", functor.get_name(), ["+", axis]]
-        elif not s.vexpr is None:
-            return build_ast(ctx, Expr(s.vexpr), i, s, depth, value)
+        elif not sub.vexpr is None:
+            return build_ast(ctx, Expr(sub.vexpr), i, sub, depth, value)
         else:
             if value is None:
+                print(f"subs[0]", sub)
                 raise AssertionError()
             return value
     elif op == "buf":

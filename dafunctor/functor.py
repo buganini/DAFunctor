@@ -173,6 +173,10 @@ class Functor():
             print(" "*(indent+1)*indent__num, end="")
             print("data={}".format(self.data))
 
+        if self._daf_is_contiguous:
+            print(" "*(indent+1)*indent__num, end="")
+            print("continuous")
+
         if self.daf_is_joiner():
             print(" "*(indent+1)*indent__num, end="")
             print("joiner")
