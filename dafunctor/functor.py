@@ -175,7 +175,7 @@ class Functor():
 
         if self._daf_is_contiguous:
             print(" "*(indent+1)*indent__num, end="")
-            print("continuous")
+            print("contiguous")
 
         if self.daf_is_joiner():
             print(" "*(indent+1)*indent__num, end="")

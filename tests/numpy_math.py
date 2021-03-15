@@ -64,3 +64,17 @@ def multiply3(np):
     return 3.1 * np.array([[4,5],[6,7]])
 
 test_func("multiply3", multiply3)
+
+def mixed1(np):
+    a = np.array([[2,3],[5,7]])
+    b = np.array([[11,13],[17,19]])
+    return a*b + a
+
+test_func("mixed1", mixed1)
+
+def mixed2(np):
+    a = np.array([[2,3],[5,7]])
+    b = np.array([[11,13],[17,19]])
+    return a*b - a
+
+test_func("mixed2", mixed2)

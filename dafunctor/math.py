@@ -82,7 +82,7 @@ def subtract(cls, a, b):
         else:
             return cls(
                 a.shape,
-                vexpr=["+", ["v0","v1"]],
+                vexpr=["-", ["v0","v1"]],
                 subs=[a, b],
                 desc="subtract",
                 opdesc="subtract",
