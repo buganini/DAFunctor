@@ -60,7 +60,11 @@ def gen_c_expr(scope, expr, output, indent=0):
         idx = " + ".join(idx)
         output.write(" "*(indent)*intent_spaces)
         output.write("{name}[{idx}] = ".format(name=tensor.get_name(), idx=idx))
-        output.write(gen_c_expr(scope, value_expr, output, indent=indent+1))
+        try:
+            output.write(gen_c_expr(scope, value_expr, output, indent=indent+1))
+        except:
+            print(f"Error in codegen for {tensor.get_name()}#{tensor.id}")
+            raise
         output.write(";\n")
         return indent
 

@@ -131,7 +131,7 @@ def build_ast(ctx, expr, sidx, functor, depth, value):
     elif re.match("v[0-9]+", op):
         i = int(op[1:])
         s = functor.subs[i]
-        if functor._daf_exported:
+        if s._daf_exported:
             axis = []
             for i in rangel(functor.shape):
                 axis.append(["*", [f"i{i}"]+[s for s in functor.shape[i+1:]]])
@@ -139,6 +139,8 @@ def build_ast(ctx, expr, sidx, functor, depth, value):
         elif not s.vexpr is None:
             return build_ast(ctx, Expr(s.vexpr), i, s, depth, value)
         else:
+            if value is None:
+                raise AssertionError()
             return value
     elif op == "buf":
         buf_idx = build_ast(ctx, expr[0], sidx, functor, depth, value)
