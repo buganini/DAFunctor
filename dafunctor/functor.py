@@ -142,6 +142,10 @@ class Functor():
         print(" "*(indent+1)*indent__num, end="")
         print("shape={}".format(self.shape))
 
+        if not self.dtype is None:
+            print(" "*(indent+1)*indent__num, end="")
+            print("dtype={}".format(self.dtype))
+
         if not self.partitions is None:
             print(" "*(indent+1)*indent__num, end="")
             print("partitions={}".format(self.partitions))
@@ -218,7 +222,7 @@ class Functor():
     def eval(self):
         if self._daf_eval_cached is None:
             import numpy
-            data = numpy.zeros(self.shape)
+            data = numpy.zeros(self.shape).astype(to_numpy_type(self.get_type()))
             if self.partitions:
                 for sidx, rg in enumerate(self.partitions):
                     functor = self.subs[sidx]
