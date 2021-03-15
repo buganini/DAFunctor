@@ -52,7 +52,7 @@ def subtract(cls, a, b):
             )
     if is_number(a) and is_functor(b):
         return cls(
-            a.shape,
+            b.shape,
             vexpr=["-", [a,"v0"]],
             subs=[b],
             desc="subtract",

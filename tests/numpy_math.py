@@ -44,3 +44,23 @@ def subtract2(np):
     return np.array([[4,5],[6,7]]) - 2
 
 test_func("subtract2", subtract2)
+
+def subtract3(np):
+    return 30 - np.array([[4,5],[6,7]])
+
+test_func("subtract3", subtract3)
+
+def multiply1(np):
+    return np.multiply(np.array([[4,5],[6,7]]), 3)
+
+test_func("multiply1", multiply1)
+
+def multiply2(np):
+    return np.array([[4,5],[6,7]]) * 3.1
+
+test_func("multiply2", multiply2)
+
+def multiply3(np):
+    return 3.1 * np.array([[4,5],[6,7]])
+
+test_func("multiply3", multiply3)
