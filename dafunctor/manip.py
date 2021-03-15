@@ -43,6 +43,9 @@ def _getitem(cls, a, idx):
 
     for i,s in enumerate(idx):
         if isinstance(s, int):
+            if s < 0:
+                s += a.shape[i]
+
             shape.pop(i-delcnt)
             partitions[i] = (s,1,1)
             iexpr.pop(i-delcnt)
