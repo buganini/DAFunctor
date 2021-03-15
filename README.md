@@ -39,8 +39,11 @@
 * slice assignment (step=1)
 * math
     * add
+    * subtract
+    * multiply
+
 ## PyTorch
-* Tensor
+* Tensor (contructed from data)
 * permute
 
 # Todo
@@ -48,8 +51,6 @@
 * slicing (negative step)
 * slice assignment (step!=1)
 * math
-    * subtract
-    * multiply
     * divide
     * reciprocal
     * exponents and logarithms
