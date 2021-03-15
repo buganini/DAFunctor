@@ -33,6 +33,8 @@
     * concatenate
     * repeat
     * ascontiguousarray
+* logic
+    * greater
 * slicing (positive step)
 * slice assignment (step=1)
 * math

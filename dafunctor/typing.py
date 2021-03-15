@@ -3,9 +3,11 @@ def type_normalize(d):
         return "i"
     elif type(d) is float:
         return "f"
+    elif type(d) is bool:
+        return "b"
     elif d == "float":
         return "f"
-    elif d in ("i","f"):
+    elif d in ("i","f","b"):
         return d
     raise TypeError(f"Unsupported type {type(d)}")
 
@@ -26,6 +28,7 @@ def get_list_type(a):
 
 def to_c_type(t):
     tm = {
+        "b": "unsigned char",
         "i": "int",
         "f": "float"
     }
@@ -33,6 +36,7 @@ def to_c_type(t):
 
 def to_struct_type(t):
     tm = {
+        "b": "B",
         "i": "i",
         "f": "f"
     }
@@ -41,6 +45,7 @@ def to_struct_type(t):
 def to_numpy_type(t):
     import numpy
     tm = {
+        "b": numpy.bool,
         "i": numpy.intc,
         "f": numpy.single
     }

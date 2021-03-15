@@ -100,6 +100,15 @@ def build_ast(ctx, expr, sidx, functor, depth, value):
     elif op in ("+","-","*","//","/","%"):
         args = [build_ast(ctx, e, sidx, functor, depth, value) for e in expr]
         return [op, args]
+    elif op == ">":
+        gt_a = build_ast(ctx, expr[0], sidx, functor, depth, value)
+        gt_b = build_ast(ctx, expr[1], sidx, functor, depth, value)
+        return [">", gt_a, gt_b]
+    elif op == "?:":
+        ie_cond = build_ast(ctx, expr[0], sidx, functor, depth, value)
+        ie_if = build_ast(ctx, expr[1], sidx, functor, depth, value)
+        ie_else = build_ast(ctx, expr[2], sidx, functor, depth, value)
+        return ["?:", ie_cond, ie_if, ie_else]
     elif op == "ref":
         ref_a = build_ast(ctx, expr[0], sidx, functor, depth, value)
         ref_b = build_ast(ctx, expr[1], sidx, functor, depth, value)

@@ -81,6 +81,15 @@ def eval_expr(functor, expr, index=None, sidx=None):
     elif op == "%":
         a = [eval_expr(functor, e, index, sidx) for e in expr]
         ret = reduce(lambda x,y:x%y, a)
+    elif op == ">":
+        gt_a = eval_expr(functor, expr[0], index, sidx)
+        gt_b = eval_expr(functor, expr[1], index, sidx)
+        ret = gt_a > gt_b
+    elif op == "?:":
+        ie_cond = eval_expr(functor, expr[0], index, sidx)
+        ie_if = eval_expr(functor, expr[1], index, sidx)
+        ie_else = eval_expr(functor, expr[2], index, sidx)
+        ret = ie_if if ie_cond else ie_else
     elif op == "ref":
         ref_a = eval_expr(functor, expr[0], index, sidx)
         ref_b = eval_expr(functor, expr[1], index, sidx)

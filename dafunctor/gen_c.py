@@ -104,6 +104,17 @@ def gen_c_expr(scope, expr, output, indent=0):
         output.write(f"const {dtype} {name} = {expr};\n")
         return indent
 
+    elif expr[0] == ">":
+        gt_a = gen_c_expr(scope, expr[1], output, indent=0)
+        gt_b = gen_c_expr(scope, expr[2], output, indent=0)
+        return f"({gt_a} > {gt_b})"
+
+    elif expr[0] == "?:":
+        ie_cond = gen_c_expr(scope, expr[1], output, indent=0)
+        ie_if = gen_c_expr(scope, expr[2], output, indent=0)
+        ie_else = gen_c_expr(scope, expr[3], output, indent=0)
+        return f"({ie_cond} ? {ie_if} : {ie_else})"
+
     elif expr[0] == "ref":
         a = gen_c_expr(scope, expr[1], output, indent=0)
         b = gen_c_expr(scope, expr[2], output, indent=0)
