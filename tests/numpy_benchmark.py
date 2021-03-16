@@ -4,7 +4,7 @@ import numpy
 
 # https://nbviewer.jupyter.org/github/rasbt/One-Python-benchmark-per-day/blob/master/ipython_nbs/day7_2_jit_numpy.ipynb
 
-def bench1(n):
+def bench1(runner, n):
     A = numpy.random.rand(n,n).astype(numpy.single)
     B = numpy.random.rand(n,n).astype(numpy.single)
 
@@ -25,15 +25,10 @@ def bench1(n):
         # return A*B-1*A
         return A*B-4.1*A > 2.5*B
 
-    if __name__=="__main__":
-        runner = benchmark_func
-    else:
-        runner = test_func
-
     runner(f"bench1_{n}", f, A, B, params=[A, B])
 
 if __name__=="__main__":
     for i in range(1,5):
-        bench1(10**i)
+        bench1(benchmark_func, 10**i)
 else:
-    bench1(2)
+    bench1(test_func, 2)
