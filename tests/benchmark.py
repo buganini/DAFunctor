@@ -20,8 +20,8 @@ def bench1(n):
         A = np.reshape(np.frombuffer(A, dtype=np.single), (n,n))
         B = np.reshape(np.frombuffer(B, dtype=np.single), (n,n))
 
-        return A*B-1*A
-        # return A*B-4.1*A > 2.5*B
+        # return A*B-1*A
+        return A*B-4.1*A > 2.5*B
 
     test_func(f"bench1_{n}", f, A, B, params=[A, B])
 
