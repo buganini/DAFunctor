@@ -37,17 +37,20 @@ class CFG():
         pp.pprint(self.stmt)
 
 def split_graph(functor):
-    ret = []
+    seq = []
     if functor.daf_is_joiner():
         for f in functor.subs:
             f._daf_requested_contiguous = True
-            if not f._daf_is_contiguous:
-                ret.append(f)
-    else:
-        for f in functor.subs:
-            ret.extend(split_graph(f))
+    for f in functor.subs:
+        seq.extend(split_graph(f))
     if functor._daf_requested_contiguous and not functor._daf_is_contiguous:
-        ret.append(functor)
+        seq.append(functor)
+
+    ret = []
+    for s in seq:
+        if s in ret:
+            continue
+        ret.append(s)
     return ret
 
 def build_cfg(ctx, path):
