@@ -299,6 +299,7 @@ class Functor():
         self._daf_requested_contiguous = True
         self._daf_is_output = True
         graphs = split_graph(self)
+        # print("graphs", [x.id for x in graphs])
         for graph in graphs:
             paths = build_blocks(graph, graph)
             paths = tailor_shape(paths)

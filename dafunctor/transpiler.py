@@ -178,10 +178,10 @@ def tailor_shape(paths):
             cidx = idx
             in_range = True
 
-            if bfunctor.partitions:
+            if bfunctor.partitions and len(bfunctor.partitions) > 1:
                 raise ValueError(f"Partitioned root functor {bfunctor}")
-            else:
-                pidx = bfunctor.eval_index(idx)
+
+            pidx = bfunctor.eval_index(idx)
 
             if pidx is None:
                 continue
