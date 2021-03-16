@@ -6,7 +6,7 @@
     * Dynamic transpose
 
 # Advantages
-* Small memory footprint (minimal intermediate buffers, no manual handling required)
+* Small memory footprint (less intermediate buffers, no manual handling required)
 * No memory management
 * No unnecessary `if` in the loop
 * Side-by-side comparison with NumPy results
@@ -69,6 +69,7 @@
 * zero-dimentional value
 * function decorator
 * loop fusion ?
+* Large buffer breakdown
 
 # License
 Both DAFunctor and its generated source codes are licensed under `GNU Lesser General Public License v3.0`.
@@ -172,7 +173,6 @@ void gen_array3(float * array3 /* [2, 3, 2]=12 */)
     * CUDA
     * OpenMP
     * LLIR
-    * Rust
 ## Other
     * Named tensor
 
