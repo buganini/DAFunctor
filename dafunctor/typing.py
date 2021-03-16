@@ -1,3 +1,5 @@
+# https://numpy.org/doc/stable/user/basics.types.html
+
 def type_normalize(d):
     if type(d) is int:
         return "i"
