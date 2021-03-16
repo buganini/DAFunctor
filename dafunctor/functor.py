@@ -306,6 +306,7 @@ class Functor():
             if not paths:
                 continue
             for path in paths:
+                # print("path", path[0], [f"#{x[0].id}" for x in path[1]])
                 functor = path[1][-1][0]
                 build_cfg(ctx, path)
             if not functor._daf_is_output:

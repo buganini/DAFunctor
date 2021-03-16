@@ -67,21 +67,25 @@ def build_cfg(ctx, path):
             scope.append(["for_shape", rg, scope.depth + 1, idepth])
             scope = scope.enter()
 
-        if functor.partitions:
-            if functor.iexpr:
-                scope.append(["comment", functor.opdesc])
-                for d,iexpr in enumerate(functor.iexpr):
-                    scope.append(["val","i", ["idx", d, scope.depth, idepth+1], build_ast(scope, Expr(iexpr), sidx, functor.subs[sidx], idepth, value)])
-                idepth += 1
+        if functor._daf_exported: # XXX: exported symbol
+            axis = []
+            for i in rangel(functor.shape):
+                axis.append(["*", [f"i{i}"]+[s for s in functor.shape[i+1:]]])
+            value = ["ref", functor.get_name(), ["+", axis]]
         else:
-            if functor.iexpr:
-                scope.append(["comment", functor.opdesc])
-                for d,iexpr in enumerate(functor.iexpr):
-                    scope.append(["val", "i", ["idx", d, scope.depth, idepth+1], build_ast(scope, Expr(iexpr), sidx, functor.subs[sidx], idepth, value)])
-                idepth += 1
-            value = build_ast(scope, Expr(functor.vexpr), sidx, functor, idepth, value)
-
-        output = False
+            if functor.partitions:
+                if functor.iexpr:
+                    scope.append(["comment", functor.opdesc])
+                    for d,iexpr in enumerate(functor.iexpr):
+                        scope.append(["val","i", ["idx", d, scope.depth, idepth+1], build_ast(scope, Expr(iexpr), sidx, functor.subs[sidx], idepth, value)])
+                    idepth += 1
+            else:
+                if functor.iexpr:
+                    scope.append(["comment", functor.opdesc])
+                    for d,iexpr in enumerate(functor.iexpr):
+                        scope.append(["val", "i", ["idx", d, scope.depth, idepth+1], build_ast(scope, Expr(iexpr), sidx, functor.subs[sidx], idepth, value)])
+                    idepth += 1
+                value = build_ast(scope, Expr(functor.vexpr), sidx, functor, idepth, value)
 
         final_out = depth + 1 == len(phases)
         if not functor.sexpr is None: # scatter
@@ -134,7 +138,7 @@ def build_ast(ctx, expr, sidx, functor, depth, value):
     elif re.match("v[0-9]+", op):
         i = int(op[1:])
         sub = functor.subs[i]
-        if sub._daf_exported:
+        if sub._daf_exported: # XXX: exported symbol
             axis = []
             for i in rangel(sub.shape):
                 axis.append(["*", [f"i{i}"]+[s for s in sub.shape[i+1:]]])

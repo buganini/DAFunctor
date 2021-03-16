@@ -66,6 +66,16 @@ def gen_c_expr(scope, expr, output, indent=0):
             print(f"Error in codegen for {tensor.get_name()}#{tensor.id}")
             raise
         output.write(";\n")
+
+        if False:
+            output.write(" "*(indent)*intent_spaces)
+            output.write('printf("')
+            output.write(tensor.get_name())
+            output.write('[%d] = %f\\n", ')
+            output.write(f"{idx}, ")
+            output.write("{name}[{idx}]".format(name=tensor.get_name(), idx=idx))
+            output.write(');\n')
+
         return indent
 
     elif expr[0] == "idx": # axis, scope_depth, iexpr_depth
@@ -97,7 +107,7 @@ def gen_c_expr(scope, expr, output, indent=0):
         name = functor.get_name()
         size = ' * '.join([str(x) for x in functor.shape])
         output.write(" "*indent*intent_spaces)
-        output.write(f"AUTOBUF {dtype} {name}[{size}]; // {list(functor.shape)}\n")
+        output.write(f"AUTOBUF {dtype} {name}[{size}]; // {list(functor.shape)} {functor.desc}\n")
         return indent
 
     elif expr[0] == "val":
