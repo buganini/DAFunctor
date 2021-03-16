@@ -8,6 +8,20 @@ from pygments import highlight
 from pygments.formatters import TerminalFormatter as Formatter
 from pygments.lexers import CLexer as Lexer
 
+def benchmark_func(test, f, *args, params=tuple(), **kwargs):
+    symbols = f(nf, *args, **kwargs)
+    symbols.name = test
+
+    func = symbols.jit(*params)
+
+    import timeit
+    iter = 1000
+    numpy_time = timeit.timeit(lambda: f(np, *args, **kwargs), number=iter)
+    ndaf_time = timeit.timeit(lambda: func(*args), number=iter)
+    print(test)
+    print("  Gain", numpy_time/ndaf_time)
+
+
 def test_func(test, f, *args, params=tuple(), **kwargs):
     try:
         golden = f(np, *args, **kwargs)
@@ -81,4 +95,5 @@ if __name__=="__main__":
             try:
                 importlib.import_module(os.path.splitext(fn)[0])
             except:
-                pass
+                print("Error running test", fn)
+                raise

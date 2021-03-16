@@ -2,6 +2,8 @@ from tester_numpy import *
 from dafunctor import Buffer
 import numpy
 
+# https://nbviewer.jupyter.org/github/rasbt/One-Python-benchmark-per-day/blob/master/ipython_nbs/day7_2_jit_numpy.ipynb
+
 def bench1(n):
     A = numpy.random.rand(n,n).astype(numpy.single)
     B = numpy.random.rand(n,n).astype(numpy.single)
@@ -23,8 +25,15 @@ def bench1(n):
         # return A*B-1*A
         return A*B-4.1*A > 2.5*B
 
-    test_func(f"bench1_{n}", f, A, B, params=[A, B])
+    if __name__=="__main__":
+        runner = benchmark_func
+    else:
+        runner = test_func
 
-# https://nbviewer.jupyter.org/github/rasbt/One-Python-benchmark-per-day/blob/master/ipython_nbs/day7_2_jit_numpy.ipynb
-for i in range(1,5):
-    bench1(10**i)
+    runner(f"bench1_{n}", f, A, B, params=[A, B])
+
+if __name__=="__main__":
+    for i in range(1,5):
+        bench1(10**i)
+else:
+    bench1(2)
