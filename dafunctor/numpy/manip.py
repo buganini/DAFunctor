@@ -4,7 +4,7 @@ from .. import manip
 from .functor import NumpyFunctor
 from ..pytyping import *
 from .. import manip
-from ..ast import strip as ast_strip
+from ..expression import ast_strip
 import functools
 
 def ascontiguousarray(a):

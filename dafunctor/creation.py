@@ -1,7 +1,7 @@
 from .pytyping import *
 from .common import *
 from .functor import Data
-from .ast import strip as ast_strip
+from .expression import ast_strip
 
 def _shape(data):
     try:

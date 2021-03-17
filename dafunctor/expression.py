@@ -18,6 +18,20 @@ import re
 from .pytyping import *
 from .typing import *
 
+def ast_strip(expr):
+    if type(expr) in (int, float, str):
+        return expr
+    op = expr[0]
+    args = expr[1]
+    if op in ("+","-","*","//","/","%"):
+        args = [ast_strip(x) for x in args]
+        args = [x for x in args if not x is None]
+    if not args:
+        return None
+    if len(args)==1:
+        return args[0]
+    return [op, args]
+
 class Expr():
     def __init__(self, expr, ref_functor=None, ref_i=None):
         if type(expr) in (int, float, str, Expr) or is_functor(expr):
