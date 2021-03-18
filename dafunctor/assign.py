@@ -11,12 +11,16 @@ def gen_assign_checker_ast(node):
             continue
         if type(target) is ast.Name:
             target_load = ast.Name(id=target.id, ctx=ast.Load())
-            assign_name = target.id
+            assign_name = ast.Str(s=target.id)
             assign_slice = ast.Constant(value=None, kind=None)
         elif type(target) is ast.Subscript:
             target_load = ast.Subscript(value=target.value, slice=target.slice, ctx=ast.Load())
-            assign_name = target.value.id
-            assign_slice = target.slice
+            assign_name = ast.Str(s=target.value.id)
+            # print(ast.dump(target))
+            if type(target.slice) is ast.Index:
+                assign_slice = target.slice.value
+            else:
+                assign_slice = target.slice
         else:
             print(ast.dump(target))
             raise AssertionError()
@@ -39,7 +43,7 @@ def gen_assign_checker_ast(node):
                             attr='__assign__',
                             ctx=ast.Load()
                         ),
-                        args=[ast.Str(s=assign_name), assign_slice],
+                        args=[assign_name, assign_slice],
                         keywords=[],
                         starargs=None,
                         kwargs=None
@@ -65,6 +69,7 @@ class AssignTransformer(ast.NodeTransformer):
         new_node = gen_assign_checker_ast(node)
         ast.copy_location(new_node, node)
         ast.fix_missing_locations(new_node)
+        # print(ast.dump(new_node))
         # print(ast.unparse(new_node))
         return new_node
 
