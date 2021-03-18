@@ -1,39 +1,58 @@
 import ast
 import inspect
 
-# https://github.com/RyanKung/assign
-
 def gen_assign_checker_ast(node):
-    targets = [t.id for t in node.targets]
-    obj_name = node.value.id
+    exprs = [node]
+    todo = list(node.targets)
+    while todo:
+        target = todo.pop(0)
+        if type(target) is ast.Tuple:
+            todo.extend(target.elts)
+            continue
+        if type(target) is ast.Name:
+            target_load = ast.Name(id=target.id, ctx=ast.Load())
+            assign_name = target.id
+            assign_slice = ast.Constant(value=None, kind=None)
+        elif type(target) is ast.Subscript:
+            target_load = ast.Subscript(value=target.value, slice=target.slice, ctx=ast.Load())
+            assign_name = target.value.id
+            assign_slice = target.slice
+        else:
+            print(ast.dump(target))
+            raise AssertionError()
+        exprs.append(ast.If(
+            test=ast.Call(
+                func=ast.Name(id='hasattr', ctx=ast.Load()),
+                args=[
+                    target_load,
+                    ast.Str(s='__assign__'),
+                ],
+                keywords=[],
+                starargs=None,
+                kwargs=None
+            ),
+            body=[
+                ast.Expr(
+                    value=ast.Call(
+                        func=ast.Attribute(
+                            value=target_load,
+                            attr='__assign__',
+                            ctx=ast.Load()
+                        ),
+                        args=[ast.Str(s=assign_name), assign_slice],
+                        keywords=[],
+                        starargs=None,
+                        kwargs=None
+                    )
+                )
+            ],
+            orelse=[]
+        ))
+
 
     return ast.If(
-        test=ast.Call(
-            func=ast.Name(id='hasattr', ctx=ast.Load()),
-            args=[
-                ast.Name(id=obj_name, ctx=ast.Load()),
-                ast.Str(s='__assign__'),
-            ],
-            keywords=[],
-            starargs=None,
-            kwargs=None
-        ),
-        body=[
-            ast.Assign(
-                targets=[ast.Name(id=target, ctx=ast.Store())],
-                value=ast.Call(
-                    func=ast.Attribute(
-                        value=ast.Name(id=obj_name, ctx=ast.Load()),
-                        attr='__assign__',
-                        ctx=ast.Load()
-                    ),
-                    args=[ast.Str(s=target)],
-                    keywords=[],
-                    starargs=None,
-                    kwargs=None
-                )
-            )
-            for target in targets],
+        test=ast.Constant(value=True),
+        body=exprs,
         orelse=[]
     )
 
@@ -43,11 +62,10 @@ class AssignTransformer(ast.NodeTransformer):
         return node
 
     def visit_Assign(self, node):
-        if not isinstance(node.value, ast.Name):
-            return node
         new_node = gen_assign_checker_ast(node)
         ast.copy_location(new_node, node)
         ast.fix_missing_locations(new_node)
+        # print(ast.unparse(new_node))
         return new_node
 
 def patch_func(func):
@@ -57,7 +75,11 @@ def patch_func(func):
     trans = AssignTransformer()
     src = inspect.getsource(func)
     src = src.rstrip("\r\n").split("\n")
-    spaces = min([len(re.match(r" *", l)[0]) for l in src])
+    spaces = [x for x in [len(re.match(r" *", l)[0]) for l in src] if x != 0]
+    if spaces:
+        spaces = min(spaces)
+    else:
+        spaces = 0
     src = "\n".join([l[spaces:] for l in src])
     node = ast.parse(src)
     new_node = trans.visit(node)
@@ -75,12 +97,42 @@ if __name__=="__main__":
         return f
 
     class A():
-        def __assign__(self, name):
-            print("assign", name)
+        def __assign__(self, name, idx):
+            print("Assign", self, "as", name, "idx", idx)
 
     @assign
-    def f(a):
-        var_name = a
-        return var_name
+    def f(assignee):
+        a = assignee
+
+        b, c = assignee, assignee
+
+        arr = [assignee,assignee]
+        d, e = arr
+
+        f, (g, h) = assignee, (assignee,assignee)
+
+        i = [0,0]
+        i[1] = assignee
+
+        j = [0,0]
+        x = 1
+        j[x] = assignee
+
+        k = [0,0]
+        x = [1]
+        z = 0
+        k[x[z]] = assignee
+
+        print("a", repr(a))
+        print("b", repr(a))
+        print("c", repr(a))
+        print("d", repr(a))
+        print("e", repr(a))
+        print("f", repr(a))
+        print("g", repr(a))
+        print("h", repr(a))
+        print("i", repr(a))
+        print("j", repr(a))
+        print("k", repr(a))
 
     f(A())

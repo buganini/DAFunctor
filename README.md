@@ -70,6 +70,7 @@
 * function decorator
 * loop fusion ?
 * Large buffer breakdown
+* assign: AnnAssign
 
 # License
 Both DAFunctor and its generated source codes are licensed under `GNU Lesser General Public License v3.0`.
