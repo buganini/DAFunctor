@@ -1,6 +1,10 @@
 import ast
 import inspect
 
+# Tested with:
+# * 3.8
+# * 3.9
+
 def gen_assign_checker_ast(node):
     exprs = [node]
     todo = list(node.targets)
