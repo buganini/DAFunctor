@@ -84,7 +84,7 @@ def patch_func(func):
     trans = AssignTransformer()
     src = inspect.getsource(func)
     src = src.rstrip("\r\n").split("\n")
-    spaces = [x for x in [len(re.match(r" *", l)[0]) for l in src] if x != 0]
+    spaces = [x for x in [len(re.match(r" *", l)[0]) for l in src if l]]
     if spaces:
         spaces = min(spaces)
     else:
