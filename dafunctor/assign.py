@@ -132,6 +132,9 @@ if __name__=="__main__":
         z = 0
         k[x[z]] = assignee
 
+        # l = list(range(10))
+        # l[2:3] = assignee
+
         print("a", repr(a))
         print("b", repr(a))
         print("c", repr(a))
