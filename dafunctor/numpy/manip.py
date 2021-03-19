@@ -10,7 +10,7 @@ import functools
 def ascontiguousarray(a):
     r = NumpyFunctor(
         a.shape,
-        vexpr = "pass",
+        vexpr = "v0",
         subs = [manip.clone(NumpyFunctor, a)],
         desc = "ascontiguousarray",
         opdesc = "ascontiguousarray"

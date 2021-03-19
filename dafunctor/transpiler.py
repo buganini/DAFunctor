@@ -144,20 +144,6 @@ def build_ast(ctx, expr, sidx, functor, depth, value):
                 print(f"subs[{i}]", sub)
                 raise AssertionError()
             return value
-    elif op == "pass":
-        sub = functor.subs[0]
-        if functor._daf_exported:
-            axis = []
-            for i in rangel(functor.shape):
-                axis.append(["*", [f"i{i}"]+[s for s in functor.shape[i+1:]]])
-            return ["ref", functor.get_name(), ["+", axis]]
-        elif not sub.vexpr is None:
-            return build_ast(ctx, Expr(sub.vexpr), i, sub, depth, value)
-        else:
-            if value is None:
-                print(f"subs[0]", sub)
-                raise AssertionError()
-            return value
     elif op == "buf":
         buf_idx = build_ast(ctx, expr[0], sidx, functor, depth, value)
         return ["ref", functor.name, buf_idx]

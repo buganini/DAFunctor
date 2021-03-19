@@ -182,4 +182,3 @@ python3 tests/tester_numpy.py
 ```
 # XXX
 * exported symbol
-* v0/pass
