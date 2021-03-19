@@ -1,4 +1,5 @@
 import functools
+import itertools
 from .common import *
 from .typing import *
 
@@ -169,15 +170,16 @@ def gen_c_expr(scope, expr, output, indent=0):
         return indent
 
     elif expr[0] == "func":
-        out = expr[1]
-        params = expr[2]
-        const_data = expr[3]
+        func_name = expr[1]
+        outs = expr[2]
+        params = expr[3]
+        const_data = expr[4]
 
         output.write(" "*indent*intent_spaces)
-        args = [f"{to_c_type(out.get_type())} * {out.name} /* {list(out.shape)}={functools.reduce(lambda x,y:x*y, out.shape)} */"]
-        for p in params:
-            args.append(f"{to_c_type(p.get_type())} * {p.name} /* {list(p.shape)}={functools.reduce(lambda x,y:x*y, p.shape)} */")
-        output.write("void gen_{}({})\n".format(out.name, ", ".join(args)))
+        args = []
+        for a in itertools.chain(outs, params):
+            args.append(f"{to_c_type(a.get_type())} * {a.get_name()} /* {list(a.shape)}={functools.reduce(lambda x,y:x*y, a.shape)} */")
+        output.write("void {}({})\n".format(func_name, ", ".join(args)))
 
         output.write(" "*indent*intent_spaces)
         output.write("{\n")

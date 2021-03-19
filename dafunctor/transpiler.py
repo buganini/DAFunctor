@@ -4,8 +4,7 @@ from .expression import *
 import re
 
 class CFG():
-    def __init__(self, target, parent=None, data=None):
-        self.target = target
+    def __init__(self, parent=None, data=None):
         self.parent = parent
         if parent is None:
             self.depth = -1
@@ -27,7 +26,7 @@ class CFG():
         self.stmt.append(stmt)
 
     def enter(self):
-        scope = CFG(self.target, parent=self, data=self.data)
+        scope = CFG(parent=self, data=self.data)
         self.append(["scope", scope])
         return scope
 
@@ -46,12 +45,7 @@ def split_graph(functor):
     if functor._daf_requested_contiguous and not functor._daf_is_contiguous:
         seq.append(functor)
 
-    ret = []
-    for s in seq:
-        if s in ret:
-            continue
-        ret.append(s)
-    return ret
+    return list_dedup(seq)
 
 def build_cfg(ctx, path):
     value = None
@@ -248,3 +242,26 @@ def build_blocks(functor, target):
         paths.append((rg, [(functor, 0)]))
 
     return paths
+
+def transpile(ctx, nodes):
+    graphs = []
+    for n in nodes:
+        n._daf_requested_contiguous = True
+        n._daf_is_output = True
+        graphs.extend(split_graph(n))
+
+    graphs = list_dedup(graphs)
+    # print("graphs", [x.id for x in graphs])
+    for graph in graphs:
+        paths = build_blocks(graph, graph)
+        paths = tailor_shape(paths)
+        if not paths:
+            continue
+        for path in paths:
+            # print("path", path[0], [f"#{x[0].id}" for x in path[1]])
+            functor = path[1][-1][0]
+            build_cfg(ctx, path)
+        if not functor._daf_is_output:
+            ctx.append(["comment", f"end of {functor.get_name()}"])
+            ctx.append(["newline"])
+        graph._daf_exported = True

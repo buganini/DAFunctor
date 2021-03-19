@@ -301,25 +301,10 @@ class Functor():
 
     def build_cfg(self, ctx=None):
         if ctx is None:
-            ctx = CFG(self)
+            ctx = CFG()
 
-        self._daf_requested_contiguous = True
-        self._daf_is_output = True
-        graphs = split_graph(self)
-        # print("graphs", [x.id for x in graphs])
-        for graph in graphs:
-            paths = build_blocks(graph, graph)
-            paths = tailor_shape(paths)
-            if not paths:
-                continue
-            for path in paths:
-                # print("path", path[0], [f"#{x[0].id}" for x in path[1]])
-                functor = path[1][-1][0]
-                build_cfg(ctx, path)
-            if not functor._daf_is_output:
-                ctx.append(["comment", f"end of {functor.get_name()}"])
-                ctx.append(["newline"])
-            graph._daf_exported = True
+        transpile(ctx, [self])
+
         return ctx
 
     def get_name(self, assign=False):
@@ -344,21 +329,22 @@ class Functor():
         import ctypes
         import numpy
 
-        fname = f"gen_{self.get_name()}"
+        src_name = f"gen_{self.get_name()}"
+        func_name = src_name
 
         jitdir = os.path.realpath("__jit__")
         os.makedirs(jitdir, exist_ok=True)
 
-        ctx = CFG(self)
-        ctx.append(["func", self, args, ctx.data])
+        ctx = CFG()
+        ctx.append(["func", func_name, [self], args, ctx.data])
         self.build_cfg(ctx)
         ctx.append(["endfunc"])
 
-        cfile = os.path.join(jitdir, fname+".c")
+        cfile = os.path.join(jitdir, src_name+".c")
         with open(cfile, "w") as f:
             gen_func(ctx, f)
 
-        so_path = os.path.join(jitdir, f"{fname}_{self.id}.so")
+        so_path = os.path.join(jitdir, f"{src_name}_{self.id}.so")
         try:
             subprocess.check_output(["cc", "-fPIC"] + cflags + ["-shared", "-o", so_path, cfile])
         except:
@@ -366,7 +352,7 @@ class Functor():
             raise
 
         dll = ctypes.CDLL(so_path)
-        f = getattr(dll, fname)
+        f = getattr(dll, func_name)
 
         from .numpy import NumpyFunctor
         from .torch import TorchFunctor

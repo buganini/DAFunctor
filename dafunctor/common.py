@@ -10,3 +10,11 @@ def array_close(a, b):
     if tuple(a.shape) != tuple(b.shape):
         return False
     return numpy.allclose(a, b)
+
+def list_dedup(l):
+    ret = []
+    for e in l:
+        if e in ret:
+            continue
+        ret.append(e)
+    return ret
