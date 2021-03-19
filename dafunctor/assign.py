@@ -77,6 +77,40 @@ class AssignTransformer(ast.NodeTransformer):
         # print(ast.unparse(new_node))
         return new_node
 
+    def visit_FunctionDef(self, func):
+        for arg in func.args.args:
+            assign = ast.If(
+                test=ast.Call(
+                    func=ast.Name(id='hasattr', ctx=ast.Load()),
+                    args=[
+                        ast.Name(id=arg.arg, ctx=ast.Load()),
+                        ast.Str(s='__assign__'),
+                    ],
+                    keywords=[],
+                    starargs=None,
+                    kwargs=None
+                ),
+                body=[
+                    ast.Expr(
+                        value=ast.Call(
+                            func=ast.Attribute(
+                                value=ast.Name(id=arg.arg, ctx=ast.Load()),
+                                attr='__assign__',
+                                ctx=ast.Load()
+                            ),
+                            args=[ast.Str(s=arg.arg), ast.Constant(value=None, kind=None)],
+                            keywords=[],
+                            starargs=None,
+                            kwargs=None
+                        )
+                    )
+                ],
+                orelse=[]
+            )
+            func.body.insert(0, assign)
+            ast.NodeTransformer.generic_visit(self, func)
+        return func
+
 def patch_func(func, global_vars=None):
     if func.__code__.co_filename == "__assign__":
         return func
@@ -91,6 +125,7 @@ def patch_func(func, global_vars=None):
         spaces = 0
     src = "\n".join([l[spaces:] for l in src])
     node = ast.parse(src)
+    # print(ast.dump(node))
     new_node = trans.visit(node)
     ast.fix_missing_locations(new_node)
     patched_code = compile(new_node, "__assign__", "exec")

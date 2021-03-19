@@ -14,7 +14,6 @@ class jit():
         if self.enable:
             if func.__code__.co_filename == "__assign__":
                 return func
-            # print(inspect.getfullargspec(func))
 
             patched_func = assign.patch_func(func, inspect.stack()[1].frame.f_globals)
             def f(*args, **kwargs):

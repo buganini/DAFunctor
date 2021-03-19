@@ -11,8 +11,8 @@ else:
     import numpy
 
 @jit(enable_jit)
-def demo_func(a, b):
-    m = numpy.meshgrid(a, b)
+def demo_func(data_a, data_b):
+    m = numpy.meshgrid(data_a, data_b)
     meshgrid_a = m[0]
     meshgrid_b = m[1]
     return meshgrid_a, meshgrid_b
