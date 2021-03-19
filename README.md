@@ -67,7 +67,6 @@
 
 ## Others
 * zero-dimentional value
-* function decorator
 * loop fusion ?
 * Large buffer breakdown
 * assign: AnnAssign
