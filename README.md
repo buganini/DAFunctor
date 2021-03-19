@@ -180,5 +180,3 @@ void gen_array3(float * array3 /* [2, 3, 2]=12 */)
 ```
 python3 tests/tester_numpy.py
 ```
-# XXX
-* exported symbol

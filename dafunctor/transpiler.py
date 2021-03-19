@@ -62,10 +62,7 @@ def build_cfg(ctx, path):
             scope = scope.enter()
 
         if functor._daf_exported: # XXX: exported symbol
-            axis = []
-            for i in rangel(functor.shape):
-                axis.append(["*", [f"i{i}"]+[s for s in functor.shape[i+1:]]])
-            value = ["ref", functor.get_name(), ["+", axis]]
+            value = gen_base_expr(functor)
         else:
             if functor.partitions:
                 if functor.iexpr:
@@ -93,6 +90,12 @@ def build_cfg(ctx, path):
                 print("Path", path)
                 raise AssertionError("value is None")
             scope.append(["=", functor, value, idepth, scope.depth])
+
+def gen_base_expr(functor):
+    axis = []
+    for i in rangel(functor.shape):
+        axis.append(["*", [f"i{i}"]+[s for s in functor.shape[i+1:]]])
+    return ["ref", functor.get_name(), ["+", axis]]
 
 def build_ast(ctx, expr, sidx, functor, depth, value):
     op = expr.op
@@ -132,11 +135,8 @@ def build_ast(ctx, expr, sidx, functor, depth, value):
     elif re.match("v[0-9]+", op):
         i = int(op[1:])
         sub = functor.subs[i]
-        if sub._daf_exported: # XXX: exported symbol
-            axis = []
-            for i in rangel(sub.shape):
-                axis.append(["*", [f"i{i}"]+[s for s in sub.shape[i+1:]]])
-            return ["ref", sub.get_name(), ["+", axis]]
+        if sub._daf_exported:
+            return gen_base_expr(sub)
         elif not sub.vexpr is None:
             return build_ast(ctx, Expr(sub.vexpr), i, sub, depth, value)
         else:
