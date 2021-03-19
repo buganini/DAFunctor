@@ -11,13 +11,18 @@ else:
     import numpy
 
 @jit(enable_jit)
-def func():
-    var_a = numpy.arange(5,10)
-    return var_a
+def func(a, b):
+    m = numpy.meshgrid(a, b)
+    meshgrid_a = m[0]
+    meshgrid_b = m[1]
+    return meshgrid_a, meshgrid_b
+
+da = numpy.arange(5)
+db = numpy.arange(7)
 
 if enable_jit:
-    a = func()
-    print(a())
+    a = func(da, db)
+    print(a(da, db))
 else:
-    a = func()
+    a = func(da, db)
     print(a)
