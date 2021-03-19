@@ -11,7 +11,7 @@ else:
     import numpy
 
 @jit(enable_jit)
-def func(a, b):
+def demo_func(a, b):
     m = numpy.meshgrid(a, b)
     meshgrid_a = m[0]
     meshgrid_b = m[1]
@@ -20,8 +20,11 @@ def func(a, b):
 da = numpy.arange(5)
 db = numpy.arange(7)
 
-jitfunc = func(da, db)
+jitfunc = demo_func(da, db)
 
 r = jitfunc(da, db)
 
 print(r)
+
+if enable_jit:
+    print(open(jitfunc.source).read())
