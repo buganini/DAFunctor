@@ -20,9 +20,8 @@ def func(a, b):
 da = numpy.arange(5)
 db = numpy.arange(7)
 
-if enable_jit:
-    a = func(da, db)
-    print(a(da, db))
-else:
-    a = func(da, db)
-    print(a)
+jitfunc = func(da, db)
+
+r = jitfunc(da, db)
+
+print(r)

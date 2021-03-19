@@ -91,4 +91,6 @@ class jit():
                 return wfunc
             return f
         else:
-            return func
+            def f(*args, **kwargs):
+                return func
+            return f
