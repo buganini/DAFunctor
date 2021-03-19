@@ -178,7 +178,8 @@ def gen_c_expr(scope, expr, output, indent=0):
         output.write(" "*indent*intent_spaces)
         args = []
         for a in itertools.chain(outs, params):
-            args.append(f"{to_c_type(a.get_type())} * {a.get_name()} /* {list(a.shape)}={functools.reduce(lambda x,y:x*y, a.shape)} */")
+            sz = functools.reduce(lambda x,y:x*y, a.shape)
+            args.append(f"{to_c_type(a.get_type())} {a.get_name()}[{sz}] /* {list(a.shape)} */")
         output.write("void {}({})\n".format(func_name, ", ".join(args)))
 
         output.write(" "*indent*intent_spaces)
