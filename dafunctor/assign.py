@@ -53,8 +53,8 @@ class AssignTransformer(ast.NodeTransformer):
                                 ctx=ast.Load()
                             ),
                             args=[assign_name, assign_slice],
-                            keywords=[],
                             starargs=None,
+                            keywords=[],
                             kwargs=None
                         )
                     )
@@ -73,10 +73,11 @@ class AssignTransformer(ast.NodeTransformer):
         ast.fix_missing_locations(new_node)
         # print(ast.dump(new_node))
         # print(ast.unparse(new_node))
+
         return new_node
 
     def visit_FunctionDef(self, func):
-        for arg in func.args.args:
+        for i,arg in enumerate(func.args.args):
             assign = ast.If(
                 test=ast.Call(
                     func=ast.Name(id='hasattr', ctx=ast.Load()),
@@ -105,7 +106,7 @@ class AssignTransformer(ast.NodeTransformer):
                 ],
                 orelse=[]
             )
-            func.body.insert(0, assign)
+            func.body.insert(i, assign)
             ast.NodeTransformer.generic_visit(self, func)
         return func
 
