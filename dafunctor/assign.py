@@ -5,72 +5,70 @@ import inspect
 # * 3.8
 # * 3.9
 
-def gen_assign_checker_ast(node):
-    exprs = [node]
-    todo = list(node.targets)
-    while todo:
-        target = todo.pop(0)
-        if type(target) is ast.Tuple:
-            todo.extend(target.elts)
-            continue
-        if type(target) is ast.Name:
-            target_load = ast.Name(id=target.id, ctx=ast.Load())
-            assign_name = ast.Str(s=target.id)
-            assign_slice = ast.Constant(value=None, kind=None)
-        elif type(target) is ast.Subscript:
-            target_load = ast.Subscript(value=target.value, slice=target.slice, ctx=ast.Load())
-            assign_name = ast.Str(s=target.value.id)
-            # print(ast.dump(target))
-            if type(target.slice) is ast.Index:
-                assign_slice = target.slice.value
-            else:
-                assign_slice = target.slice
-        else:
-            print(ast.dump(target))
-            raise AssertionError()
-        exprs.append(ast.If(
-            test=ast.Call(
-                func=ast.Name(id='hasattr', ctx=ast.Load()),
-                args=[
-                    target_load,
-                    ast.Str(s='__assign__'),
-                ],
-                keywords=[],
-                starargs=None,
-                kwargs=None
-            ),
-            body=[
-                ast.Expr(
-                    value=ast.Call(
-                        func=ast.Attribute(
-                            value=target_load,
-                            attr='__assign__',
-                            ctx=ast.Load()
-                        ),
-                        args=[assign_name, assign_slice],
-                        keywords=[],
-                        starargs=None,
-                        kwargs=None
-                    )
-                )
-            ],
-            orelse=[]
-        ))
-
-
-    return ast.If(
-        test=ast.Constant(value=True),
-        body=exprs,
-        orelse=[]
-    )
-
 class AssignTransformer(ast.NodeTransformer):
     def generic_visit(self, node):
         ast.NodeTransformer.generic_visit(self, node)
         return node
 
     def visit_Assign(self, node):
-        new_node = gen_assign_checker_ast(node)
+        exprs = [node]
+        todo = list(node.targets)
+        while todo:
+            target = todo.pop(0)
+            if type(target) is ast.Tuple:
+                todo.extend(target.elts)
+                continue
+            if type(target) is ast.Name:
+                target_load = ast.Name(id=target.id, ctx=ast.Load())
+                assign_name = ast.Str(s=target.id)
+                assign_slice = ast.Constant(value=None, kind=None)
+            elif type(target) is ast.Subscript:
+                target_load = ast.Subscript(value=target.value, slice=target.slice, ctx=ast.Load())
+                assign_name = ast.Str(s=target.value.id)
+                # print(ast.dump(target))
+                if type(target.slice) is ast.Index:
+                    assign_slice = target.slice.value
+                else:
+                    assign_slice = target.slice
+            else:
+                print(ast.dump(target))
+                raise AssertionError()
+            exprs.append(ast.If(
+                test=ast.Call(
+                    func=ast.Name(id='hasattr', ctx=ast.Load()),
+                    args=[
+                        target_load,
+                        ast.Str(s='__assign__'),
+                    ],
+                    keywords=[],
+                    starargs=None,
+                    kwargs=None
+                ),
+                body=[
+                    ast.Expr(
+                        value=ast.Call(
+                            func=ast.Attribute(
+                                value=target_load,
+                                attr='__assign__',
+                                ctx=ast.Load()
+                            ),
+                            args=[assign_name, assign_slice],
+                            keywords=[],
+                            starargs=None,
+                            kwargs=None
+                        )
+                    )
+                ],
+                orelse=[]
+            ))
+
+
+        new_node = ast.If(
+            test=ast.Constant(value=True),
+            body=exprs,
+            orelse=[]
+        )
+
         ast.copy_location(new_node, node)
         ast.fix_missing_locations(new_node)
         # print(ast.dump(new_node))
@@ -127,6 +125,7 @@ def patch_func(func, global_vars=None):
     node = ast.parse(src)
     # print(ast.dump(node))
     new_node = trans.visit(node)
+    # print(ast.unparse(new_node))
     ast.fix_missing_locations(new_node)
     patched_code = compile(new_node, "__assign__", "exec")
     local_vars = {}
