@@ -12,9 +12,7 @@ else:
 
 @jit(enable_jit)
 def demo_func(data_a, data_b):
-    m = numpy.meshgrid(data_a, data_b)
-    meshgrid_a = m[0]
-    meshgrid_b = m[1]
+    meshgrid_a, meshgrid_b = numpy.meshgrid(data_a, data_b)
     return meshgrid_a, meshgrid_b
 
 da = numpy.arange(5)

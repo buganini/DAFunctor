@@ -46,6 +46,9 @@ def _getitem(cls, a, idx):
             if s < 0:
                 s += a.shape[i]
 
+            if s < 0 or s >= a.shape[i]:
+                raise IndexError()
+
             shape.pop(i-delcnt)
             partitions[i] = (s,1,1)
             iexpr.pop(i-delcnt)
