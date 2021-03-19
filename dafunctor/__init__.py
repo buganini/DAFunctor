@@ -1,5 +1,6 @@
 from .functor import *
 from .gen_c import *
+from .decorator import *
 
 def build_cfg(tensors):
     from collections import OrderedDict

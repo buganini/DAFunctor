@@ -90,6 +90,7 @@ class Functor():
         self.desc = desc
         self.opdesc = opdesc
         self.name = name
+        self.auto_name = None
         self.buffer = buffer
 
         # internal perspective
@@ -121,6 +122,7 @@ class Functor():
     def __repr__(self):
         d = []
         d.append("id={}".format(self.id ))
+        d.append("name={}".format(self.get_name() or ""))
         d.append("desc={}".format(self.desc))
         d.append("shape={}".format(self.shape))
         if self.partitions:
@@ -131,10 +133,15 @@ class Functor():
             d.append("subs={}".format(len(self.subs)))
         return "Functor({})".format(", ".join(d))
 
+    def __assign__(self, name, idx):
+        if not idx is None:
+            name = f"{name}_{idx}"
+        self.auto_name = name
+
     def print(self, indent=0, suffix=""):
         indent__num = 4
         print(" "*indent*indent__num, end="")
-        print("Functor{}: #{} {}".format(suffix, self.id, self.name or ""))
+        print("Functor{}: #{} {}".format(suffix, self.id, self.get_name() or ""))
 
         print(" "*(indent+1)*indent__num, end="")
         print("{}".format(self.desc))
@@ -315,10 +322,15 @@ class Functor():
             graph._daf_exported = True
         return ctx
 
-    def get_name(self):
-        if self.name is None:
-            self.name = f"array{self.id}"
-        return self.name
+    def get_name(self, assign=False):
+        name = self.name
+        if name is None:
+            name = self.auto_name
+        if name is None:
+            name = f"array{self.id}"
+        if assign:
+            self.name = name
+        return name
 
     def get_type(self):
         if not self.dtype is None:

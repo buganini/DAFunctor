@@ -77,7 +77,7 @@ class AssignTransformer(ast.NodeTransformer):
         # print(ast.unparse(new_node))
         return new_node
 
-def patch_func(func):
+def patch_func(func, global_vars=None):
     if func.__code__.co_filename == "__assign__":
         return func
     import re
@@ -94,8 +94,9 @@ def patch_func(func):
     new_node = trans.visit(node)
     ast.fix_missing_locations(new_node)
     patched_code = compile(new_node, "__assign__", "exec")
-    exec(patched_code)
-    return locals()[func.__name__]
+    local_vars = {}
+    exec(patched_code, global_vars, local_vars)
+    return local_vars[func.__name__]
 
 
 if __name__=="__main__":
