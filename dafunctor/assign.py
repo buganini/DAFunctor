@@ -98,19 +98,18 @@ def patch_func(func, global_vars=None):
     exec(patched_code, global_vars, local_vars)
     return local_vars[func.__name__]
 
+def patch_assign(func):
+    patched_func = patch_func(func, inspect.stack()[1].frame.f_globals)
+    def f(*args, **kwargs):
+        ret = patched_func(*args, **kwargs)
+    return f
 
 if __name__=="__main__":
-    def assign(func):
-        patched_func = patch_func(func)
-        def f(*args, **kwargs):
-            ret = patched_func(*args, **kwargs)
-        return f
-
     class A():
         def __assign__(self, name, idx):
             print("Assign", self, "as", name, "idx", idx)
 
-    @assign
+    @patch_assign
     def f(assignee):
         a = assignee
 
