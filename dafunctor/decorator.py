@@ -42,7 +42,7 @@ class jit():
 
                     ctx = CFG()
                     ctx.append(["func", func.__name__, outs, args])
-                    transpile(ctx.enter(["func_init"]), outs)
+                    transpile(ctx.enter(header=["func_init"]), outs)
 
                     cfile = os.path.join(jitdir, fname+".c")
                     with open(cfile, "w") as f:

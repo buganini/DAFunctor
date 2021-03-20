@@ -28,15 +28,15 @@ class CFG():
 
     def append_header(self, stmt):
         self.stmt.insert(self.header, stmt)
-        if self.header == 0:
-            self.stmt.insert(1, ["newline"])
         self.header += 1
 
-    def enter(self, init_stmt=None):
+    def enter(self, init=None, header=None):
         scope = CFG(parent=self, data=self.data)
         self.append(["scope", scope])
-        if not init_stmt is None:
-            scope.append(init_stmt)
+        if not header is None:
+            scope.append_header(header)
+        if not init is None:
+            scope.append(init)
         return scope
 
     def print(self):

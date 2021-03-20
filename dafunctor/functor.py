@@ -337,7 +337,7 @@ class Functor():
 
         ctx = CFG()
         ctx.append(["func", func_name, [self], args])
-        transpile(ctx.enter(["func_init"]), [self])
+        transpile(ctx.enter(header=["func_init"]), [self])
 
         cfile = os.path.join(jitdir, src_name+".c")
         with open(cfile, "w") as f:
