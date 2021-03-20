@@ -166,29 +166,18 @@ def tailor_shape(paths):
     for path in paths:
         brg = path[0]
         phases = path[1]
-        bfunctor, bsidx = phases[0]
-        vs = [set() for i in rangel(bfunctor.shape)]
+        vs = [set() for i in rangel(brg)]
 
         for idx in ranger(brg):
             cidx = idx
             in_range = True
 
-            if bfunctor.partitions and len(bfunctor.partitions) > 1:
-                raise ValueError(f"Partitioned root functor {bfunctor}")
-
-            pidx = bfunctor.eval_index(idx)
-
-            if pidx is None:
-                continue
-
-            idx = pidx
-
-            for functor, sidx in phases[1:]:
-                if functor.partitions:
+            for i, (functor, sidx) in enumerate(phases):
+                if functor.partitions and i > 0:
                     sfunctor = functor.subs[sidx]
                     srg = functor.partitions[sidx]
                     if len(idx) != len(srg):
-                        raise AssertionError(f"Dimension mismatch {idx} {srg}")
+                        raise AssertionError(f"Dimension mismatch {idx} {srg} for {functor}")
                     if not all([i>=r[0] for i,r in zip(idx, srg)]):
                         in_range = False
                         break
