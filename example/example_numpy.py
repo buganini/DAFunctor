@@ -18,11 +18,9 @@ def demo_func(data_a, data_b):
 da = numpy.arange(5)
 db = numpy.arange(7)
 
-jitfunc = demo_func(da, db)
-
-r = jitfunc(da, db)
+r = demo_func(da, db)
 
 print(r)
 
 if enable_jit:
-    print(open(jitfunc.source).read())
+    print(open(demo_func(get_source=True)).read())
