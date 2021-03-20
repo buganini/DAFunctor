@@ -157,7 +157,7 @@ def build_ast(ctx, expr, sidx, functor, depth, value):
             return value
     elif op == "buf":
         buf_idx = build_ast(ctx, expr[0], sidx, functor, depth, value)
-        return ["ref", functor.name, buf_idx]
+        return ["ref", functor.get_name(), buf_idx]
     else:
         raise NotImplementedError("Invalid token {}".format(op))
 

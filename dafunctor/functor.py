@@ -398,7 +398,7 @@ class Functor():
         return func
 
 class Buffer(Functor):
-    def __init__(self, name, dtype, data):
+    def __init__(self, dtype, data, name=None):
         import struct
         l = len(data)
         esz = struct.Struct(to_struct_type(dtype)).size

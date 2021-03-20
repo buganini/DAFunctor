@@ -4,10 +4,10 @@ import numpy
 from dafunctor import Buffer
 
 data1 = struct.pack("ffff", 0.1, 0.2, 0.3, 0.4)
-buf1  = Buffer("data1", "f", data1)
+buf1  = Buffer("f", data1, "buf1")
 
 data2 = struct.pack("ffff", 0.5, 0.6, 0.7, 0.8)
-buf2  = Buffer("data2", "f", data2)
+buf2  = Buffer("f", data2, "buf2")
 
 def func1(np, b):
     if np is numpy:

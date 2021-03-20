@@ -11,8 +11,8 @@ def bench1(runner, n):
     A = A.tobytes()
     B = B.tobytes()
 
-    A  = Buffer("data1", "f", A)
-    B  = Buffer("data2", "f", B)
+    A  = Buffer("f", A, "data_a")
+    B  = Buffer("f", B, "data_b")
 
     def f(np, A, B):
         if np is numpy:
