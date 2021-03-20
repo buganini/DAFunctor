@@ -27,8 +27,8 @@ def bench1(runner, n):
 
     runner(f"bench1_{n}", f, A, B, params=[A, B])
 
+bench1(test_func, 2)
+
 if __name__=="__main__":
     for i in range(1,5):
         bench1(benchmark_func, 10**i)
-else:
-    bench1(test_func, 2)

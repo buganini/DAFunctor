@@ -162,10 +162,31 @@ def build_ast(ctx, expr, sidx, functor, depth, value):
         raise NotImplementedError("Invalid token {}".format(op))
 
 def tailor_shape(paths):
+    def idx_in_range(idx, srg):
+        if len(idx) != len(srg):
+            raise AssertionError(f"Dimension mismatch {idx} {srg}")
+        if not all([i>=r[0] for i,r in zip(idx, srg)]):
+            return False
+        if not all([i<r[0]+r[1]*r[2] for i,r in zip(idx, srg)]):
+            return False
+        if not all([(i-r[0]) % r[2] == 0 for i,r in zip(idx, srg)]):
+            return False
+        return True
+
     ret = []
-    for path in paths:
-        brg = path[0]
-        phases = path[1]
+    for brg, phases in paths:
+        # print("brg", brg)
+        # print("phases", phases)
+
+        # fast pass
+        none_scatter = all([x[0].sexpr is None for x in phases])
+        none_partition = all([x[0].partitions is None or len(x[0].partitions)==1 for x in phases])
+        same_size = len(set([x[0].shape.size() for x in phases])) == 1
+        if same_size and none_scatter and none_partition:
+            ret.append((brg, phases))
+            continue
+
+        # slow pass
         vs = [set() for i in rangel(brg)]
 
         for idx in ranger(brg):
@@ -174,17 +195,7 @@ def tailor_shape(paths):
 
             for i, (functor, sidx) in enumerate(phases):
                 if functor.partitions and i > 0:
-                    sfunctor = functor.subs[sidx]
-                    srg = functor.partitions[sidx]
-                    if len(idx) != len(srg):
-                        raise AssertionError(f"Dimension mismatch {idx} {srg} for {functor}")
-                    if not all([i>=r[0] for i,r in zip(idx, srg)]):
-                        in_range = False
-                        break
-                    if not all([i<r[0]+r[1]*r[2] for i,r in zip(idx, srg)]):
-                        in_range = False
-                        break
-                    if not all([(i-r[0]) % r[2] == 0 for i,r in zip(idx, srg)]):
+                    if not idx_in_range(idx, functor.partitions[sidx]):
                         in_range = False
                         break
 

@@ -41,6 +41,12 @@ class Shape():
         s = [x[1] for x in self.shape]
         return s.__getitem__(idx)
 
+    def size(self):
+        ret = 1
+        for x in self.shape:
+            ret *= x[1]
+        return ret
+
     def ensure_schema(self, shape):
         if type(shape) is Shape:
             return tuple(shape.shape)
