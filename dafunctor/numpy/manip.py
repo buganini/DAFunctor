@@ -4,7 +4,6 @@ from .. import manip
 from .functor import NumpyFunctor
 from ..pytyping import *
 from .. import manip
-from ..expression import ast_strip
 import functools
 
 def ascontiguousarray(a):
@@ -23,39 +22,7 @@ def transpose(functor, dims):
     return manip.transpose(NumpyFunctor, functor, dims)
 
 def reshape(a, shape):
-    offset = ["+",[
-        ["*",
-            [f"i{i}"] + [a.shape[j] for j in range(i+1,len(a.shape))]
-        ]
-        for i in rangel(a.shape)
-    ]]
-    iexpr = []
-    for i in rangel(shape):
-        iexpr.append(
-            ast_strip([
-                "//",
-                [
-                    ["%",
-                        [offset]+[
-                            [
-                                "*",
-                                shape[j:]
-                            ]
-                            for j in range(i+1)
-                        ]
-                    ],
-                    ["*", shape[i+1:]]
-                ]
-            ])
-        )
-    return NumpyFunctor(
-        shape,
-        partitions = [[(0,s,1) for s in a.shape]],
-        iexpr = iexpr,
-        desc = f"reshape({shape})_{a.desc}",
-        opdesc = f"reshape({shape})",
-        subs = [a]
-    )
+    return manip.reshape(NumpyFunctor, a, shape)
 
 def stack(array, axis=0):
     if axis < 0:

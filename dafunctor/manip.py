@@ -1,5 +1,6 @@
 import math
 from .functor import Functor
+from .expression import ast_strip
 from .common import *
 
 def clone(cls, a):
@@ -33,6 +34,41 @@ def transpose(cls, functor, dims):
         subs = [functor]
     )
 
+def reshape(cls, a, shape):
+    offset = ["+",[
+        ["*",
+            [f"i{i}"] + [a.shape[j] for j in range(i+1,len(a.shape))]
+        ]
+        for i in rangel(a.shape)
+    ]]
+    iexpr = []
+    for i in rangel(shape):
+        iexpr.append(
+            ast_strip([
+                "//",
+                [
+                    ["%",
+                        [offset]+[
+                            [
+                                "*",
+                                shape[j:]
+                            ]
+                            for j in range(i+1)
+                        ]
+                    ],
+                    ["*", shape[i+1:]]
+                ]
+            ])
+        )
+    return cls(
+        shape,
+        partitions = [[(0,s,1) for s in a.shape]],
+        iexpr = iexpr,
+        desc = f"reshape({shape})_{a.desc}",
+        opdesc = f"reshape({shape})",
+        subs = [a],
+        # is_contiguous = a._daf_is_contiguous
+    )
 
 def _getitem(cls, a, idx):
     delcnt = 0
