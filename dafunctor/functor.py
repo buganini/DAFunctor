@@ -336,8 +336,8 @@ class Functor():
         os.makedirs(jitdir, exist_ok=True)
 
         ctx = CFG()
-        ctx.append(["func", func_name, [self], args, ctx.data])
-        self.build_cfg(ctx.enter())
+        ctx.append(["func", func_name, [self], args])
+        transpile(ctx.enter(["func_init"]), [self])
 
         cfile = os.path.join(jitdir, src_name+".c")
         with open(cfile, "w") as f:

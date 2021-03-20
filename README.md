@@ -76,6 +76,11 @@ Both DAFunctor and its generated source codes are licensed under `GNU Lesser Gen
 
 # Example
 ```
+python3 example/example_numpy.py
+```
+
+# Interactive example
+```
 >>> import dafunctor.numpy as nf
 >>> s = nf.meshgrid([1,2],[3,4,5])
 >>> s.eval()
@@ -96,17 +101,16 @@ array([[[1., 2.],
         [4., 4.],
         [5., 5.]]], dtype=float32)
 >>> s.print()
-Functor: #3 tensor3
+Functor: #3 array3
     transposed_raw_meshgrid
     shape=((0, 2, 1), (0, 3, 1), (0, 2, 1))
     partitions=[[(0, 2, 1), (0, 2, 1), (0, 3, 1)]]
-    vexpr=v0
     iexpr=[
             i0
             i2
             i1
     ]
-    Functor[0]: #2
+    Functor[0]: #2 array2
         raw_meshgrid
         shape=((0, 2, 1), (0, 2, 1), (0, 3, 1))
         partitions=[[(0, 2, 1), (0, 3, 1)], [(0, 2, 1), (0, 3, 1)]]
@@ -115,12 +119,12 @@ Functor: #3 tensor3
                 i0
                 i1
         ]
-        Functor[0]: #0
+        Functor[0]: #0 array0
             raw_meshgrid[0]
             shape=((0, 2, 1), (0, 3, 1))
             vexpr=['ref', ['d', 'i0']]
             data=[1, 2]
-        Functor[1]: #1
+        Functor[1]: #1 array1
             raw_meshgrid[1]
             shape=((0, 2, 1), (0, 3, 1))
             vexpr=['ref', ['d', 'i1']]
@@ -128,9 +132,9 @@ Functor: #3 tensor3
 >>> print(open(f.source).read())
 #include <stdio.h>
 #include <math.h>
-#define AUTOBUF
+#define AUTOBUF // put static here if your algorithm run with only one instance
 
-void gen_array3(float * array3 /* [2, 3, 2]=12 */)
+void gen_array3(float array3[12] /* shape=[2, 3, 2] */)
 {
     const static int d_meshgrid_0[] = {1,2};
     const static int d_meshgrid_1[] = {3,4,5};
@@ -138,7 +142,6 @@ void gen_array3(float * array3 /* [2, 3, 2]=12 */)
     for(int i0=0;i0<2;i0+=1)
       for(int i1=0;i1<3;i1+=1)
     {
-
         // raw_meshgrid
         const int i0_0_1 = 0;
         const int i1_0_1 = i0;
@@ -148,12 +151,12 @@ void gen_array3(float * array3 /* [2, 3, 2]=12 */)
         const int i0_0_2 = i0_0_1;
         const int i1_0_2 = i2_0_1;
         const int i2_0_2 = i1_0_1;
+
         array3[i0_0_2*3*2 + i1_0_2*2 + i2_0_2] = d_meshgrid_0[i0];
     }
     for(int i0=0;i0<2;i0+=1)
       for(int i1=0;i1<3;i1+=1)
     {
-
         // raw_meshgrid
         const int i0_0_1 = 1;
         const int i1_0_1 = i0;
@@ -163,6 +166,7 @@ void gen_array3(float * array3 /* [2, 3, 2]=12 */)
         const int i0_0_2 = i0_0_1;
         const int i1_0_2 = i2_0_1;
         const int i2_0_2 = i1_0_1;
+
         array3[i0_0_2*3*2 + i1_0_2*2 + i2_0_2] = d_meshgrid_1[i1];
     }
 }

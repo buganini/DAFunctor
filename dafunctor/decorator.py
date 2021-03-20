@@ -41,8 +41,8 @@ class jit():
                     os.makedirs(jitdir, exist_ok=True)
 
                     ctx = CFG()
-                    ctx.append(["func", func.__name__, outs, args, ctx.data])
-                    transpile(ctx.enter(), outs)
+                    ctx.append(["func", func.__name__, outs, args])
+                    transpile(ctx.enter(["func_init"]), outs)
 
                     cfile = os.path.join(jitdir, fname+".c")
                     with open(cfile, "w") as f:

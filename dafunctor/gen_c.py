@@ -172,7 +172,6 @@ def gen_c_expr(scope, expr, output, indent=0):
         func_name = expr[1]
         outs = expr[2]
         params = expr[3]
-        const_data = expr[4]
 
         output.write(" "*indent*intent_spaces)
         args = []
@@ -184,9 +183,12 @@ def gen_c_expr(scope, expr, output, indent=0):
             args.append(f"const {to_c_type(a.get_type())} {a.get_name()}[{sz}] /* shape={list(a.shape)} */")
         output.write("void {}({})\n".format(func_name, ", ".join(args)))
 
-        if const_data:
-            for sym_name in const_data:
-                dtype, data = const_data[sym_name]
+        return indent
+
+    elif expr[0] == "func_init":
+        if scope.data:
+            for sym_name in scope.data:
+                dtype, data = scope.data[sym_name]
                 isarray = True
                 output.write(" "*indent*intent_spaces)
                 output.write("const static {dtype} {name}".format(dtype=to_c_type(dtype), name=sym_name))

@@ -32,9 +32,11 @@ class CFG():
             self.stmt.insert(1, ["newline"])
         self.header += 1
 
-    def enter(self):
+    def enter(self, init_stmt=None):
         scope = CFG(parent=self, data=self.data)
         self.append(["scope", scope])
+        if not init_stmt is None:
+            scope.append(init_stmt)
         return scope
 
     def print(self):
