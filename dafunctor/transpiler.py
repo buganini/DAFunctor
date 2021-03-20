@@ -7,7 +7,7 @@ class CFG():
     def __init__(self, parent=None, data=None):
         self.parent = parent
         if parent is None:
-            self.depth = -1
+            self.depth = -2
         else:
             self.depth = parent.depth + 1
         self.data = data
@@ -15,6 +15,7 @@ class CFG():
             self.data = OrderedDict()
         self.stmt = []
         self.output = False
+        self.header = 0
 
     def __repr__(self):
         return str(self.stmt)
@@ -24,6 +25,12 @@ class CFG():
 
     def append(self, stmt):
         self.stmt.append(stmt)
+
+    def append_header(self, stmt):
+        self.stmt.insert(self.header, stmt)
+        if self.header == 0:
+            self.stmt.insert(1, ["newline"])
+        self.header += 1
 
     def enter(self):
         scope = CFG(parent=self, data=self.data)
@@ -57,7 +64,7 @@ def build_cfg(ctx, path):
             out = phases[-1][0]
             if not out._daf_is_output and not out._daf_is_declared:
                 out._daf_is_declared = True
-                scope.append(["autobuf", out])
+                scope.append_header(["autobuf", out])
             scope.append(["for_shape", rg, scope.depth + 1, idepth])
             scope = scope.enter()
 
@@ -69,12 +76,14 @@ def build_cfg(ctx, path):
                     scope.append(["comment", functor.opdesc])
                     for d,iexpr in enumerate(functor.iexpr):
                         scope.append(["val","i", ["idx", d, scope.depth, idepth+1], build_ast(scope, Expr(iexpr), sidx, functor.subs[sidx], idepth, value)])
+                    scope.append(["newline"])
                     idepth += 1
             else:
                 if functor.iexpr:
                     scope.append(["comment", functor.opdesc])
                     for d,iexpr in enumerate(functor.iexpr):
                         scope.append(["val", "i", ["idx", d, scope.depth, idepth+1], build_ast(scope, Expr(iexpr), sidx, functor.subs[sidx], idepth, value)])
+                    scope.append(["newline"])
                     idepth += 1
                 value = build_ast(scope, Expr(functor.vexpr), sidx, functor, idepth, value)
 
@@ -248,6 +257,7 @@ def transpile(ctx, nodes):
             functor = path[1][-1][0]
             build_cfg(ctx, path)
         if not functor._daf_is_output:
+            ctx.append(["newline"])
             ctx.append(["comment", f"end of {functor.get_name()}"])
             ctx.append(["newline"])
         graph._daf_exported = True

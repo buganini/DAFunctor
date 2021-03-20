@@ -337,8 +337,7 @@ class Functor():
 
         ctx = CFG()
         ctx.append(["func", func_name, [self], args, ctx.data])
-        self.build_cfg(ctx)
-        ctx.append(["endfunc"])
+        self.build_cfg(ctx.enter())
 
         cfile = os.path.join(jitdir, src_name+".c")
         with open(cfile, "w") as f:

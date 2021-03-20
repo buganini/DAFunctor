@@ -160,7 +160,6 @@ def gen_c_expr(scope, expr, output, indent=0):
         return str(expr[1])
 
     elif expr[0] == "comment":
-        output.write("\n");
         output.write(" "*indent*intent_spaces)
         output.write(f"// {expr[1]}\n");
         return indent
@@ -185,11 +184,6 @@ def gen_c_expr(scope, expr, output, indent=0):
             args.append(f"const {to_c_type(a.get_type())} {a.get_name()}[{sz}] /* shape={list(a.shape)} */")
         output.write("void {}({})\n".format(func_name, ", ".join(args)))
 
-        output.write(" "*indent*intent_spaces)
-        output.write("{\n")
-
-        indent += 1
-
         if const_data:
             for sym_name in const_data:
                 dtype, data = const_data[sym_name]
@@ -207,11 +201,6 @@ def gen_c_expr(scope, expr, output, indent=0):
             output.write("\n")
 
         return indent
-
-    elif expr[0] == "endfunc":
-        output.write(" "*(indent-1)*intent_spaces)
-        output.write("}\n\n")
-        return indent - 1
 
     else:
         raise NotImplementedError("Unknown expr op {}".format(expr[0]))
