@@ -175,18 +175,14 @@ def tailor_shape(paths):
 
     ret = []
     for brg, phases in paths:
-        # print("brg", brg)
-        # print("phases", phases)
-
         # fast pass
-        none_scatter = all([x[0].sexpr is None for x in phases])
-        none_partition = all([x[0].partitions is None or len(x[0].partitions)==1 for x in phases])
+        not_partitioned = all([x[0].partitions is None or len(x[0].partitions)==1 for x in phases])
         same_size = len(set([x[0].shape.size() for x in phases])) == 1
-        if same_size and none_scatter and none_partition:
+        if same_size and not_partitioned:
             ret.append((brg, phases))
             continue
 
-        # slow pass
+        # slow check
         vs = [set() for i in rangel(brg)]
 
         for idx in ranger(brg):
