@@ -179,10 +179,10 @@ def gen_c_expr(scope, expr, output, indent=0):
         args = []
         for a in outs:
             sz = functools.reduce(lambda x,y:x*y, a.shape)
-            args.append(f"{to_c_type(a.get_type())} {a.get_name()}[{sz}] /* {list(a.shape)} */")
+            args.append(f"{to_c_type(a.get_type())} {a.get_name()}[{sz}] /* shape={list(a.shape)} */")
         for a in params:
             sz = functools.reduce(lambda x,y:x*y, a.shape)
-            args.append(f"const {to_c_type(a.get_type())} {a.get_name()}[{sz}] /* {list(a.shape)} */")
+            args.append(f"const {to_c_type(a.get_type())} {a.get_name()}[{sz}] /* shape={list(a.shape)} */")
         output.write("void {}({})\n".format(func_name, ", ".join(args)))
 
         output.write(" "*indent*intent_spaces)
