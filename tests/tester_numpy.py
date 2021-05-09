@@ -3,6 +3,7 @@ import os
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 import numpy as np
 import dafunctor.numpy as nf
+from dafunctor.graph import *
 from dafunctor.common import *
 from pygments import highlight
 from pygments.formatters import TerminalFormatter as Formatter
@@ -22,7 +23,7 @@ def benchmark_func(test, f, *args, params=tuple(), **kwargs):
     print("  Gain", numpy_time/ndaf_time)
 
 
-def test_func(test, f, *args, params=tuple(), **kwargs):
+def test_func(test, f, *args, params=tuple(), visualize=False, **kwargs):
     try:
         golden = f(np, *args, **kwargs)
     except:
@@ -35,6 +36,9 @@ def test_func(test, f, *args, params=tuple(), **kwargs):
     except:
         print(f"\x1b[1;31mconstruct failed\x1b[m: {test}")
         raise
+
+    if visualize:
+        draw_graph(symbols)
 
     try:
         ev = symbols.eval()

@@ -329,7 +329,17 @@ class Functor():
 
         return "f"
 
-    def jit(self, *args, cflags=["-O3"]):
+    def get_tmp(self, include_id=False):
+        jitdir = os.path.realpath("__jit__")
+        os.makedirs(jitdir, exist_ok=True)
+        src_name = f"gen_{self.get_name()}"
+
+        if include_id:
+            return os.path.join(jitdir, f"{src_name}_{self.id}")
+        else:
+            return os.path.join(jitdir, src_name)
+
+    def jit(self, *args, cflags=["-Ofast","-march=native","-DAUTOBUF=static"]):
         import sys
         import subprocess
         import ctypes
@@ -338,18 +348,15 @@ class Functor():
         src_name = f"gen_{self.get_name()}"
         func_name = src_name
 
-        jitdir = os.path.realpath("__jit__")
-        os.makedirs(jitdir, exist_ok=True)
-
         ctx = CFG()
         ctx.append(["func", func_name, [self], args])
         transpile(ctx.enter(header=["func_init"]), [self])
 
-        cfile = os.path.join(jitdir, src_name+".c")
+        cfile = self.get_tmp()+".c"
         with open(cfile, "w") as f:
             gen_func(ctx, f)
 
-        so_path = os.path.join(jitdir, f"{src_name}_{self.id}.so")
+        so_path = self.get_tmp(True)+".so"
         try:
             subprocess.check_output(["cc", "-fPIC"] + cflags + ["-shared", "-o", so_path, cfile])
         except:
