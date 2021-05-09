@@ -1,6 +1,7 @@
 import subprocess
+from PIL import Image
 
-def draw_graph(functor):
+def draw_graph(functor, display=False):
     def walk(f, functor):
         f.write(f"\t{functor.get_name()}\n")
         for s in functor.subs:
@@ -16,4 +17,7 @@ def draw_graph(functor):
         f.write("}\n")
 
     subprocess.check_output(["dot", dotfile, "-Tpng", "-o", pngfile])
-    print(pngfile)
+
+    if display:
+        Image.open(pngfile).show()
+    return pngfile
