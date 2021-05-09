@@ -39,7 +39,10 @@ class Expr():
             self.args = []
         else:
             self.op = expr[0]
-            self.args = expr[1]
+            try:
+                self.args = expr[1]
+            except:
+                self.args = None
         self.functor = ref_functor
         self.i = ref_i
 
@@ -138,7 +141,14 @@ def eval_expr(functor, expr, index=None, sidx=None):
         import struct
         if functor.buffer is None:
             raise AssertionError(f"Reference unset buffer of {functor}")
-        buf_idx = eval_expr(functor, expr[0], index, sidx)
+
+        buf_idx = 0
+        for i,idx in enumerate(index):
+            s = idx
+            for j in functor.shape[i+1:]:
+                s *= j
+            buf_idx += s
+
         return struct.unpack(to_struct_type(functor.dtype)*functor.shape[0], functor.buffer)[buf_idx]
     else:
         raise NotImplementedError("Invalid token {}".format(op))

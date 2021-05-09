@@ -72,7 +72,7 @@ class Shape():
 
         raise ValueError(f"Invalid shape {shape}")
 
-class Functor():
+class Functor(object):
     auto_id = 0
     def __init__(self,
             shape,
@@ -101,6 +101,7 @@ class Functor():
         self.name = name
         self.auto_name = None
         self.buffer = buffer
+        self.src_func = src_func
 
         # internal perspective
         self.vexpr = vexpr # value expression, evaluate from index/data to value
@@ -420,9 +421,28 @@ class Buffer(Functor):
         super().__init__(
             shape=[l//esz],
             dtype = dtype,
-            vexpr = ["buf", ["i0"]],
+            vexpr = ["buf"],
             buffer = data,
             name = name,
             desc = f"buffer_{name}",
             is_contiguous = True
         )
+
+class Reshaper(object):
+    def __init__(self, functor, shape):
+        self.functor = functor
+        if type(self.functor) is Reshaper:
+            self.functor = self.functor.functor
+        self.shape = Shape(shape)
+
+    def __getattr__(self, name):
+        if name in ("functor", "shape"):
+            return object.__getattr__(self, name)
+        else:
+            return getattr(self.functor, name)
+
+    def __setattr__(self, name, value):
+        if name in ("functor", "shape"):
+            object.__setattr__(self, name, value)
+        else:
+            setattr(self.functor, name, value)

@@ -67,6 +67,7 @@ def reshape(cls, a, shape):
         desc = f"reshape({shape})_{a.desc}",
         opdesc = f"reshape({shape})",
         subs = [a],
+        src_func = reshape,
         # is_contiguous = a._daf_is_contiguous
     )
 

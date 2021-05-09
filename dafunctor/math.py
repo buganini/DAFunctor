@@ -11,7 +11,7 @@ def add(cls, a, b):
                 vexpr=["+", ["v0",n]],
                 subs=[f],
                 desc="add",
-                opdesc="add",
+                opdesc=f"+ {n}",
                 src_func=add
             )
     if is_number(a) and is_functor(b):
@@ -56,7 +56,7 @@ def subtract(cls, a, b):
             vexpr=["-", [a,"v0"]],
             subs=[b],
             desc="subtract",
-            opdesc="subtract",
+            opdesc=f"{a} - ",
             src_func=subtract
         )
     elif is_functor(a) and is_number(b):
@@ -69,7 +69,7 @@ def subtract(cls, a, b):
                 vexpr=["-", ["v0",b]],
                 subs=[a],
                 desc="subtract",
-                opdesc="subtract",
+                opdesc=f"- {a}",
                 src_func=subtract
             )
     elif is_functor(a) and is_functor(b):
@@ -101,7 +101,7 @@ def multiply(cls, a, b):
                 vexpr=["*", ["v0",n]],
                 subs=[f],
                 desc="multiply",
-                opdesc="multiply",
+                opdesc=f"* {n}",
                 src_func=multiply
             )
     if is_number(a) and is_functor(b):

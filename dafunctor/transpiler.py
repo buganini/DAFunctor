@@ -45,18 +45,6 @@ class CFG():
         pp = pprint.PrettyPrinter()
         pp.pprint(self.stmt)
 
-def split_graph(functor):
-    seq = []
-    if functor.daf_is_joiner():
-        for f in functor.subs:
-            f._daf_requested_contiguous = True
-    for f in functor.subs:
-        seq.extend(split_graph(f))
-    if functor._daf_requested_contiguous and not functor._daf_is_contiguous:
-        seq.append(functor)
-
-    return list_dedup(seq)
-
 def build_cfg(ctx, path):
     value = None
     scope = ctx
@@ -107,6 +95,7 @@ def gen_base_expr(functor):
     axis = []
     for i in rangel(functor.shape):
         axis.append(["*", [f"i{i}"]+[s for s in functor.shape[i+1:]]])
+
     return ["ref", functor.get_name(), ["+", axis]]
 
 def build_ast(ctx, expr, sidx, functor, depth, value):
@@ -157,12 +146,54 @@ def build_ast(ctx, expr, sidx, functor, depth, value):
                 raise AssertionError()
             return value
     elif op == "buf":
-        buf_idx = build_ast(ctx, expr[0], sidx, functor, depth, value)
-        return ["ref", functor.get_name(), buf_idx]
+        return gen_base_expr(functor)
     else:
         raise NotImplementedError("Invalid token {}".format(op))
 
+def request_export(functor):
+    functor._daf_requested_contiguous = True
+    functor._daf_is_output = True
+
+def mark_contiguous_request(functor):
+    if functor.daf_is_joiner():
+        for f in functor.subs:
+            f._daf_requested_contiguous = True
+    for f in functor.subs:
+        mark_contiguous_request(f)
+
+def strip_tail_reshape(functor, derived=None):
+    from .manip import reshape
+    from .functor import Reshaper
+    if functor.src_func == reshape:
+        cur = functor
+        while cur.src_func == reshape:
+            cur = cur.subs[0]
+        if cur.daf_is_contiguous():
+            reshaper = Reshaper(cur, functor.shape)
+            functor.subs[0] = reshaper
+            functor.iexpr = None
+            if derived:
+                for i in rangel(derived.subs):
+                    if derived.subs[i] is functor:
+                        derived.subs[i] = reshaper
+                        break
+    else:
+        for s in functor.subs:
+            strip_tail_reshape(s, functor)
+
+def split_graph(functor):
+    seq = []
+    for f in functor.subs:
+        seq.extend(split_graph(f))
+    if functor._daf_requested_contiguous and not functor._daf_is_contiguous:
+        seq.append(functor)
+
+    return list_dedup(seq)
+
 def tailor_shape(paths):
+    """
+    Tailor "seed index" according to functors
+    """
     def idx_in_range(idx, srg):
         if len(idx) != len(srg):
             raise AssertionError(f"Dimension mismatch {idx} {srg}")
@@ -219,6 +250,9 @@ def tailor_shape(paths):
     return ret
 
 def build_blocks(functor, target):
+    """
+    Translate graph to ("seed index", [("functor", "sub-functor selector")])
+    """
     paths = []
     rg = functor.shape.shape
 
@@ -238,13 +272,23 @@ def build_blocks(functor, target):
     return paths
 
 def transpile(ctx, nodes, visualize=None, display=False):
+    # mark export node
+    for n in nodes:
+        request_export(n)
+
+    # mark shared node
+    for n in nodes:
+        mark_contiguous_request(n)
+
+    # reshape optimization
+    for n in nodes:
+        strip_tail_reshape(n)
+
     if visualize:
         draw_graph(nodes, visualize, display)
 
     graphs = []
     for n in nodes:
-        n._daf_requested_contiguous = True
-        n._daf_is_output = True
         graphs.extend(split_graph(n))
 
     graphs = list_dedup(graphs)
