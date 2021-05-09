@@ -38,7 +38,7 @@ def test_func(test, f, *args, params=tuple(), visualize=False, **kwargs):
         raise
 
     if visualize:
-        draw_graph(symbols)
+        draw_graph(symbols, True)
 
     try:
         ev = symbols.eval()

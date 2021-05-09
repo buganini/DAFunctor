@@ -47,6 +47,9 @@ class Shape():
             ret *= x[1]
         return ret
 
+    def get_desc(self):
+        return "x".join([str(x[1]) for x in self.shape])
+
     def ensure_schema(self, shape):
         if type(shape) is Shape:
             return tuple(shape.shape)
