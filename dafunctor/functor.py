@@ -428,7 +428,7 @@ class Buffer(Functor):
             is_contiguous = True
         )
 
-class Reshaper(object):
+class Reshaper(Functor):
     def __init__(self, functor, shape):
         self.functor = functor
         if type(self.functor) is Reshaper:
