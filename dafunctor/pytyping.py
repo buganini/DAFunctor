@@ -12,3 +12,7 @@ def is_functor(x):
 def is_numpy(x):
     import numpy
     return isinstance(x, numpy.ndarray)
+
+def is_buffer(x):
+    from .functor import Buffer
+    return isinstance(x, Buffer)

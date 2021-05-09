@@ -114,7 +114,7 @@ def meshgrid(*args):
         return raw_meshgrid(*args)
 
 def frombuffer(buffer, dtype=None):
-    if isinstance(buffer, Buffer):
+    if is_buffer(buffer):
         return buffer
 
     return Buffer(None, dtype, buffer)
