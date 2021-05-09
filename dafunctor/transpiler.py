@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from .common import *
 from .expression import *
+from .graph import *
 import re
 
 class CFG():
@@ -236,7 +237,10 @@ def build_blocks(functor, target):
 
     return paths
 
-def transpile(ctx, nodes):
+def transpile(ctx, nodes, visualize=None, display=False):
+    if visualize:
+        draw_graph(nodes, visualize, display)
+
     graphs = []
     for n in nodes:
         n._daf_requested_contiguous = True

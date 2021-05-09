@@ -342,7 +342,7 @@ class Functor():
         else:
             return os.path.join(jitdir, src_name)
 
-    def jit(self, *args, cflags=["-Ofast","-march=native","-DAUTOBUF=static"]):
+    def jit(self, *args, cflags=["-Ofast","-march=native","-DAUTOBUF=static"], visualize=False, display=False):
         import sys
         import subprocess
         import ctypes
@@ -353,7 +353,10 @@ class Functor():
 
         ctx = CFG()
         ctx.append(["func", func_name, [self], args])
-        transpile(ctx.enter(header=["func_init"]), [self])
+        voutput = None
+        if visualize:
+            voutput = self.get_tmp()
+        transpile(ctx.enter(header=["func_init"]), [self], visualize=voutput, display=display)
 
         cfile = self.get_tmp()+".c"
         with open(cfile, "w") as f:

@@ -3,7 +3,6 @@ import os
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 import numpy as np
 import dafunctor.numpy as nf
-from dafunctor.graph import *
 from dafunctor.common import *
 from pygments import highlight
 from pygments.formatters import TerminalFormatter as Formatter
@@ -37,9 +36,6 @@ def test_func(test, f, *args, params=tuple(), visualize=False, **kwargs):
         print(f"\x1b[1;31mconstruct failed\x1b[m: {test}")
         raise
 
-    if visualize:
-        draw_graph(symbols, True)
-
     try:
         ev = symbols.eval()
     except:
@@ -54,7 +50,7 @@ def test_func(test, f, *args, params=tuple(), visualize=False, **kwargs):
         raise ValueError(f"eval() mismatch: {test}")
 
     try:
-        func = symbols.jit(*params)
+        func = symbols.jit(*params, visualize=visualize, display=visualize)
     except:
         symbols.print()
         try:
