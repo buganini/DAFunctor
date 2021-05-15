@@ -6,6 +6,8 @@ from .expression import *
 from .transpiler import *
 from .common import *
 
+use_cffi = True
+
 class Group():
     auto_id = 0
     def __init__(self):
@@ -363,7 +365,6 @@ class Functor(object):
     def jit(self, *args, cflags=["-Ofast","-march=native","-DAUTOBUF=static"], visualize=False, display=False):
         import sys
         import subprocess
-        import ctypes
         import numpy
 
         src_name = f"gen_{self.get_name()}"
@@ -391,44 +392,87 @@ class Functor(object):
             print(open(cfile).read())
             raise
 
-        dll = ctypes.CDLL(so_path)
+        if use_cffi:
+            from cffi import FFI
+            ffi = FFI()
+            ffi.cdef(open(hfile).read())
+            dll = ffi.dlopen(so_path)
+        else:
+            import ctypes
+            dll = ctypes.CDLL(so_path)
+
         f = getattr(dll, func_name)
 
         from .numpy import NumpyFunctor
         from .torch import TorchFunctor
         if isinstance(self, NumpyFunctor):
-            def func(*args):
-                dargs = []
-                for x in args:
-                    if is_functor(x):
-                        dargs.append(ctypes.cast(x.buffer, ctypes.c_void_p))
-                    elif is_numpy(x):
-                        dargs.append(x.ctypes.data_as(ctypes.c_void_p))
-                    elif type(x) in (int, float):
-                        dargs.append(x)
-                    else:
-                        raise ValueError(f"Unknown data type {type(x)}")
-                ret = numpy.empty(self.shape, dtype=to_numpy_type(self.get_type()))
-                pointer = ret.ctypes.data_as(ctypes.c_void_p)
-                f(pointer, *dargs)
-                return ret
+            if use_cffi:
+                def func(*args):
+                    dargs = []
+                    for x in args:
+                        if is_functor(x):
+                            dargs.append(ffi.from_buffer("void *", x.buffer))
+                        elif is_numpy(x):
+                            dargs.append(ffi.cast("void *", x.ctypes.data))
+                        elif type(x) in (int, float):
+                            dargs.append(x)
+                        else:
+                            raise ValueError(f"Unknown data type {type(x)}")
+                    ret = numpy.empty(self.shape, dtype=to_numpy_type(self.get_type()))
+                    pointer = ffi.cast("void *", ret.ctypes.data)
+                    f(pointer, *dargs)
+                    return ret
+            else:
+                def func(*args):
+                    dargs = []
+                    for x in args:
+                        if is_functor(x):
+                            dargs.append(ctypes.cast(x.buffer, ctypes.c_void_p))
+                        elif is_numpy(x):
+                            dargs.append(x.ctypes.data_as(ctypes.c_void_p))
+                        elif type(x) in (int, float):
+                            dargs.append(x)
+                        else:
+                            raise ValueError(f"Unknown data type {type(x)}")
+                    ret = numpy.empty(self.shape, dtype=to_numpy_type(self.get_type()))
+                    pointer = ret.ctypes.data_as(ctypes.c_void_p)
+                    f(pointer, *dargs)
+                    return ret
         elif isinstance(self, TorchFunctor):
-            def func(*args):
-                import torch
-                dargs = []
-                for x in args:
-                    if is_functor(x):
-                        dargs.append(ctypes.cast(x.buffer, ctypes.c_void_p))
-                    elif is_numpy(x):
-                        dargs.append(x.ctypes.data_as(ctypes.c_void_p))
-                    elif type(x) in (int, float):
-                        dargs.append(x)
-                    else:
-                        raise ValueError(f"Unknown data type {type(x)}")
-                ret = numpy.empty(self.shape, dtype=to_numpy_type(self.get_type()))
-                pointer = ret.ctypes.data_as(ctypes.c_void_p)
-                f(pointer, *dargs)
-                return torch.from_numpy(ret)
+            if use_cffi:
+                def func(*args):
+                    import torch
+                    dargs = []
+                    for x in args:
+                        if is_functor(x):
+                            dargs.append(ffi.from_buffer("void *", x.buffer))
+                        elif is_numpy(x):
+                            dargs.append(ffi.cast("void *", x.ctypes.data))
+                        elif type(x) in (int, float):
+                            dargs.append(x)
+                        else:
+                            raise ValueError(f"Unknown data type {type(x)}")
+                    ret = numpy.empty(self.shape, dtype=to_numpy_type(self.get_type()))
+                    pointer = ffi.cast("void *", ret.ctypes.data)
+                    f(pointer, *dargs)
+                    return torch.from_numpy(ret)
+            else:
+                def func(*args):
+                    import torch
+                    dargs = []
+                    for x in args:
+                        if is_functor(x):
+                            dargs.append(ctypes.cast(x.buffer, ctypes.c_void_p))
+                        elif is_numpy(x):
+                            dargs.append(x.ctypes.data_as(ctypes.c_void_p))
+                        elif type(x) in (int, float):
+                            dargs.append(x)
+                        else:
+                            raise ValueError(f"Unknown data type {type(x)}")
+                    ret = numpy.empty(self.shape, dtype=to_numpy_type(self.get_type()))
+                    pointer = ret.ctypes.data_as(ctypes.c_void_p)
+                    f(pointer, *dargs)
+                    return torch.from_numpy(ret)
         func.source = cfile
         return func
 
