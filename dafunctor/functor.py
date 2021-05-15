@@ -380,6 +380,10 @@ class Functor(object):
         with open(cfile, "w") as f:
             gen_func(ctx, f)
 
+        hfile = self.get_tmp()+".h"
+        with open(hfile, "w") as f:
+            gen_header(ctx, f)
+
         so_path = self.get_tmp(True)+".so"
         try:
             subprocess.check_output(["cc", "-fPIC"] + cflags + ["-shared", "-o", so_path, cfile])

@@ -207,6 +207,30 @@ def gen_c_expr(scope, expr, output, indent=0):
     else:
         raise NotImplementedError("Unknown expr op {}".format(expr[0]))
 
+def gen_c_header(scope, expr, output, indent=0):
+    if type(expr) in (str, int, float):
+        return str(expr)
+
+    if expr is None:
+        raise AssertionError("Expr is None")
+
+    if expr[0] == "func":
+        func_name = expr[1]
+        outs = expr[2]
+        params = expr[3]
+
+        output.write(" "*indent*intent_spaces)
+        args = []
+        for a in outs:
+            sz = functools.reduce(lambda x,y:x*y, a.shape)
+            args.append(f"{to_c_type(a.get_type())} {a.get_name()}[{sz}] /* shape={list(a.shape)} */")
+        for a in params:
+            sz = functools.reduce(lambda x,y:x*y, a.shape)
+            args.append(f"const {to_c_type(a.get_type())} {a.get_name()}[{sz}] /* shape={list(a.shape)} */")
+        output.write("void {}({});\n".format(func_name, ", ".join(args)))
+
+        return indent
+
 def gen_func(ctx, output):
     output.write("#include <stdio.h>\n")
     output.write("#include <math.h>\n")
@@ -218,4 +242,9 @@ def gen_func(ctx, output):
     indent = 0
     for expr in ctx.stmt:
         indent = gen_c_expr(ctx, expr, output, indent)
+
+def gen_header(ctx, output):
+    indent = 0
+    for expr in ctx.stmt:
+        indent = gen_c_header(ctx, expr, output, indent)
 
