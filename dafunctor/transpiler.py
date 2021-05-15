@@ -161,6 +161,31 @@ def mark_contiguous_request(functor):
     for f in functor.subs:
         mark_contiguous_request(f)
 
+def shape_grouping(functor, group=None):
+    if functor._daf_group is None:
+        functor.daf_set_group(group)
+    if functor.daf_is_joiner():
+        m = {}
+        for f in functor.subs:
+            if not f._daf_is_contiguous:
+                k = tuple(f.shape)
+                if not k in m:
+                    m[k] = []
+                m[k].append(f)
+        for k in m:
+            if k == tuple(functor.shape):
+                for f in m[k]:
+                    shape_grouping(f, functor._daf_group)
+            else:
+                g = Group()
+                for f in m[k]:
+                    shape_grouping(f, g)
+    else:
+        for f in functor.subs:
+            if not f._daf_is_contiguous:
+                shape_grouping(f, functor._daf_group)
+
+
 def strip_tail_reshape(functor, derived=None):
     from .manip import reshape
     from .functor import Reshaper
@@ -275,6 +300,9 @@ def transpile(ctx, nodes, visualize=None, display=False):
     # mark export node
     for n in nodes:
         request_export(n)
+
+    for n in nodes:
+        shape_grouping(n)
 
     # mark shared node
     for n in nodes:

@@ -12,7 +12,7 @@ def tail_reshape(np, b):
     a = np.frombuffer(b, dtype=np.single)
     return np.reshape(np.reshape(a, (4,1)), (2,2))
 
-test_func("output", tail_reshape, buf1, params=[buf1], visualize=True)
+test_func("opt_reshape", tail_reshape, buf1, params=[buf1], visualize=True)
 
 #######
 
@@ -38,4 +38,4 @@ def benchmark(np, A, B):
     # return A*B-1*A
     return A*B-4.1*A > 2.5*B
 
-test_func("output", benchmark, A, B, params=[A, B], visualize=True)
+test_func("opt_reshape2", benchmark, A, B, params=[A, B], visualize=True)

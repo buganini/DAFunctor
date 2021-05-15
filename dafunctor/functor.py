@@ -6,12 +6,22 @@ from .expression import *
 from .transpiler import *
 from .common import *
 
+class Group():
+    auto_id = 0
+    def __init__(self):
+        Group.auto_id += 1
+        self.id = Group.auto_id
+        self.functors = []
+
+    def add(self, functor):
+        self.functors.append(functor)
+
 class Data(list):
     auto_id = 0
     def __init__(self, a, name=None):
         super().__init__(a)
-        self.id = Data.auto_id
         Data.auto_id += 1
+        self.id = Data.auto_id
         self.name = name
         self.dtype = get_list_type(a)
 
@@ -91,8 +101,8 @@ class Functor(object):
             is_contiguous = False,
         ):
         # external perspective
-        self.id = Functor.auto_id
         Functor.auto_id += 1
+        self.id = Functor.auto_id
         self.shape = Shape(shape)
         self.partitions = partitions
         self.dtype = dtype
@@ -125,6 +135,7 @@ class Functor(object):
         self._daf_exported = False
         self._daf_is_output = False
         self._daf_is_declared = False
+        self._daf_group = None
 
     def __str__(self):
         return self.__repr__()
@@ -200,6 +211,12 @@ class Functor(object):
 
         for i,s in enumerate(self.subs or []):
             s.print(indent+1, suffix="[{}]".format(i))
+
+    def daf_set_group(self, group):
+        if group is None:
+            group = Group()
+        self._daf_group = group
+        group.add(self)
 
     def daf_is_contiguous(self):
         return self._daf_is_contiguous or self._daf_requested_contiguous
