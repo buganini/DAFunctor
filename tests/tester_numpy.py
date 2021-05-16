@@ -22,7 +22,7 @@ def benchmark_func(test, f, *args, params=tuple(), **kwargs):
     print("  Gain", numpy_time/ndaf_time)
 
 
-def test_func(test, f, *args, params=tuple(), visualize=False, **kwargs):
+def test_func(test, f, *args, params=tuple(), eval_test=True, warmup_iter=10, bench_iter=1000, visualize=False, **kwargs):
     try:
         golden = f(np, *args, **kwargs)
     except:
@@ -36,18 +36,19 @@ def test_func(test, f, *args, params=tuple(), visualize=False, **kwargs):
         print(f"\x1b[1;31mconstruct failed\x1b[m: {test}")
         raise
 
-    try:
-        ev = symbols.eval()
-    except:
-        symbols.print()
-        print(f"\x1b[1;31meval failed\x1b[m: {test}")
-        raise
-    if not array_close(golden, ev):
-        print("Golden", golden)
-        print("Eval", ev)
-        symbols.print()
-        print(f"\x1b[1;31meval() mismatch\x1b[m: {test}")
-        raise ValueError(f"eval() mismatch: {test}")
+    if eval_test:
+        try:
+            ev = symbols.eval()
+        except:
+            symbols.print()
+            print(f"\x1b[1;31meval failed\x1b[m: {test}")
+            raise
+        if not array_close(golden, ev):
+            print("Golden", golden)
+            print("Eval", ev)
+            symbols.print()
+            print(f"\x1b[1;31meval() mismatch\x1b[m: {test}")
+            raise ValueError(f"eval() mismatch: {test}")
 
     try:
         func = symbols.jit(*params, visualize=visualize, display=visualize)
@@ -83,9 +84,10 @@ def test_func(test, f, *args, params=tuple(), visualize=False, **kwargs):
     print("\x1b[1;32mOK\x1b[m", test)
 
     import timeit
-    iter = 1000
-    numpy_time = timeit.timeit(lambda: f(np, *args, **kwargs), number=iter)
-    ndaf_time = timeit.timeit(lambda: func(*args), number=iter)
+    timeit.timeit(lambda: f(np, *args, **kwargs), number=warmup_iter)
+    timeit.timeit(lambda: func(*args), number=warmup_iter)
+    numpy_time = timeit.timeit(lambda: f(np, *args, **kwargs), number=bench_iter)
+    ndaf_time = timeit.timeit(lambda: func(*args), number=bench_iter)
     print("  Gain", numpy_time/ndaf_time)
 
 if __name__=="__main__":

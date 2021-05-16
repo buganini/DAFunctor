@@ -16,7 +16,7 @@ test_func("opt_reshape", tail_reshape, buf1, params=[buf1], visualize=True)
 
 #######
 
-n = 10
+n = 1000
 
 A = numpy.random.rand(n,n).astype(numpy.single)
 B = numpy.random.rand(n,n).astype(numpy.single)
@@ -38,4 +38,4 @@ def benchmark(np, A, B):
     # return A*B-1*A
     return A*B-4.1*A > 2.5*B
 
-test_func("opt_reshape2", benchmark, A, B, params=[A, B], visualize=True)
+test_func("opt_reshape2", benchmark, A, B, params=[A, B], eval_test=False, visualize=True)
