@@ -6,11 +6,13 @@ from .gen_c import gen_func
 import inspect
 
 class jit():
-    def __init__(self, enable=False, cflags=["-O3"]):
+    def __init__(self, enable=False, cflags=["-O3"], visualize=None, display=False):
         self.enable = enable
         self.cflags = cflags
         self.jit_func = None
         self.jit_source = None
+        self.visualize = visualize
+        self.display = display
 
     def __call__(self, func):
         if self.enable:
@@ -42,7 +44,7 @@ class jit():
 
                     ctx = CFG()
                     ctx.append(["func", func.__name__, outs, args])
-                    transpile(ctx.enter(header=["func_init"]), outs)
+                    transpile(ctx.enter(header=["func_init"]), outs, visualize=self.visualize, display=self.display)
 
                     cfile = os.path.join(jitdir, fname+".c")
                     with open(cfile, "w") as f:
