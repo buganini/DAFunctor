@@ -107,7 +107,7 @@ class AssignTransformer(ast.NodeTransformer):
                 orelse=[]
             )
             func.body.insert(i, assign)
-            ast.NodeTransformer.generic_visit(self, func)
+        ast.NodeTransformer.generic_visit(self, func)
         return func
 
 def patch_func(func, global_vars=None):
