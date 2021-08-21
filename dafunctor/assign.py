@@ -150,10 +150,10 @@ if __name__=="__main__":
 
         b, c = assignee, assignee
 
-        arr = [assignee,assignee]
+        arr = [assignee, assignee]
         d, e = arr
 
-        f, (g, h) = assignee, (assignee,assignee)
+        f, (g, h) = assignee, (assignee, assignee)
 
         i = [0,0]
         i[1] = assignee
