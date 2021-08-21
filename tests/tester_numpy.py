@@ -51,6 +51,8 @@ def test_func(test, f, *args, params=tuple(), eval_test=True, warmup_iter=10, be
             raise ValueError(f"eval() mismatch: {test}")
 
     try:
+        if visualize:
+            visualize = test
         func = symbols.jit(*params, visualize=visualize, display=visualize)
     except:
         symbols.print()
@@ -62,7 +64,7 @@ def test_func(test, f, *args, params=tuple(), eval_test=True, warmup_iter=10, be
         raise
 
     try:
-        cv = func(*args)
+        cv = func(*params)
     except:
         print(f"\x1b[1;31mjit function invocation failed\x1b[m: {test}")
 
@@ -85,9 +87,9 @@ def test_func(test, f, *args, params=tuple(), eval_test=True, warmup_iter=10, be
 
     import timeit
     timeit.timeit(lambda: f(np, *args, **kwargs), number=warmup_iter)
-    timeit.timeit(lambda: func(*args), number=warmup_iter)
+    timeit.timeit(lambda: func(*params), number=warmup_iter)
     numpy_time = timeit.timeit(lambda: f(np, *args, **kwargs), number=bench_iter)
-    ndaf_time = timeit.timeit(lambda: func(*args), number=bench_iter)
+    ndaf_time = timeit.timeit(lambda: func(*params), number=bench_iter)
     print("  Gain", numpy_time/ndaf_time)
 
 if __name__=="__main__":
