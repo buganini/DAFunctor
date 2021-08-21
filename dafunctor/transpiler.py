@@ -157,7 +157,8 @@ def request_export(functor):
 def mark_contiguous_request(functor):
     if functor.daf_is_joiner():
         for f in functor.subs:
-            f._daf_requested_contiguous = True
+            if f._daf_group != functor._daf_group:
+                f._daf_requested_contiguous = True
     for f in functor.subs:
         mark_contiguous_request(f)
 
