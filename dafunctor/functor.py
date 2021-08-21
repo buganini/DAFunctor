@@ -362,7 +362,8 @@ class Functor(object):
         else:
             return os.path.join(jitdir, src_name)
 
-    def jit(self, *args, cflags=["-O3","-fopt-info-vec-all","-march=native","-DAUTOBUF=static"], visualize=False, display=False):
+    # def jit(self, *args, cflags=["-O3","-fopt-info-vec-all","-march=native","-DAUTOBUF=static"], visualize=False, display=False):
+    def jit(self, *args, cflags=["-O3","-DAUTOBUF=static"], visualize=False, display=False):
         import sys
         import subprocess
         import numpy
