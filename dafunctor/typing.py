@@ -47,7 +47,7 @@ def to_struct_type(t):
 def to_numpy_type(t):
     import numpy
     tm = {
-        "b": numpy.bool,
+        "b": numpy.bool_,
         "i": numpy.intc,
         "f": numpy.single
     }
